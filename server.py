@@ -3,8 +3,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def hello():
-    name = request.cookies.get('name')
-    return "Hello {}!".format(name or "World")
+    return "Hello World!"
 
 @app.route("/", subdomain="blog")
 def hello_blog():
@@ -28,4 +27,4 @@ def secret_cookie():
 
 if __name__ == "__main__":
     app.secret_key = "complicatedHash"
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0", port=8080)
