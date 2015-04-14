@@ -52,12 +52,12 @@ Open a [terminal/commandline/shell/cmd.exe](http://opentechschool.github.io/pyth
 
 You will see it connect and waiting for input.
 
-[](images/waiting-telnet.png?raw=true)
+![](images/waiting-telnet.png?raw=true)
 
 
 Type `GET / HTTP/1.0` and press enter twice. You should see it respond with 'Hello World':
 
-[](images/hello-world.png?raw=true)
+![](images/hello-world.png?raw=true)
 
 You just successfully connected to a Webserver via the HTTP-Protocol and requested (`GET`) a resource (`/`) over it. Congrats!
 
@@ -72,20 +72,20 @@ The request ends with an empty line, which signals the server it can start respo
 
 Let's reopen telnet and do a GET-Request but this time, instead of doing a double empty line, add another line after the first as follows:
 
-   GET / HTTP/1.0
-   User-Agent: Telnet
+    GET / HTTP/1.0
+    User-Agent: Telnet
 
-[](images/with-user-agent.png?raw=true)
+![](images/with-user-agent.png?raw=true)
 
 You've just successfully send your first header to the server, telling them that you are using the _telnet_ to connect (as the "browser"). As you can see, the format for sending headers is exactly the same as for receiving them, a keyword, a colon (`:`) and the value. Multiple headers separated by a line-break. Let's do it again, this time we identify as 'Terminal' and see what happens.
 
-  GET / HTTP/1.0
-  Host: example.org
-  User-Agent: Terminal
+    GET / HTTP/1.0
+    Host: example.org
+    User-Agent: Terminal
 
 You will see
 
-[](images/hello-terminal.png?raw=true)
+![](images/hello-terminal.png?raw=true)
 
 
 ### What just happened?
@@ -100,7 +100,7 @@ Typing this up every time is kinda dreadfull and mostly an excerise for you to u
 
 Let's do a simple request with it again, type `http -v http://http-fun.hackership.org/`:
 
-[](images/httpie-hello.png?raw=true)
+![](images/httpie-hello.png?raw=true)
 
 Httpie formats the output the same we just did (request, headers + body then the response, headers and body), but gives us pretty syntax highlighting and helps us in doing the right headers and formatting of those.
 
@@ -108,7 +108,7 @@ Note: Per default `httpie` doesn't show our request (nor headers). Thus we are r
 
 Let's fake the User-Agent again. We can do that by adding our headers at the end of the command like this:
 
-   http -v http://http-fun.hackership.org/ User-Agent:Terminal
+    http -v http://http-fun.hackership.org/ User-Agent:Terminal
 
 And we are back at seeing our terminal output again.
 
@@ -118,7 +118,7 @@ Each and every header has its function and implementing HTTP fully means that yo
 
 One very important feature of HTTP are "cookies". You have probably heard about cookies before, probably in the context of privacy. So let's see what that is all about.
 
-To enable cookies in `httpie`, we need to specify a session for it. We do that by giving it the '--session cookie_test' parameter. Let's see what happens, when we go to the `/cookie/set`-path of our server:
+To enable cookies in `httpie`, we need to specify a session for it. We do that by giving it the `--session cookie_test` parameter. Let's see what happens, when we go to the `/cookie/set`-path of our server:
 
     http -v --session cookie_test http://http-fun.hackership.org/cookie/set?name=test
 
@@ -126,7 +126,7 @@ In your response, you'll find the header:
 
     Set-Cookie: name=test; Path=/
 
-This tells our client, that the server set a cookie with the name 'name' to the value 'test'. Let's try it again, this time set the parameter 'name' to something else. Go ahead, I'll wait. Don't forget to set the `--session cookie_test`
+This tells our client, that the server set a cookie with the name 'name' to the value 'test'. Let's try it again, this time set the parameter 'name' to something else. Go ahead, I'll wait. Don't forget to set the `--session cookie_test` .
 
 ### Cookie jar
 
@@ -149,7 +149,7 @@ As you can see, the server told us, we aren't authorized to access this page. Le
 
 The server accepted our request and told us we are authorized.
 
-[](images/authorized.png?raw=true)
+![](images/authorized.png?raw=true)
 
 We can see in the headers, that it set the cookie "username" to "hackership". Well, let's try to connect to the secrect-room again and see what happens:
 
@@ -163,7 +163,7 @@ This is all cool, but if you think about it, this also quite easy to hack. Just 
 
     http -v http://http-fun.hackership.org/cookie/secret-room Cookie:username=imposter
 
-[](images/imposter.png?raw=true)
+![](images/imposter.png?raw=true)
 
 Well. That's not really what we want – or can allow for that matter. This is why most modern web-frameworks have a mechanic called "session"-handeling. The specific implementions differ, but in general there are two approaches:
 
@@ -190,7 +190,7 @@ Can you spot the `Set-Cookie`-header in the response? Well, that looks like a bu
 
 Looks like we can:
 
-[](images/login-time.png?raw=true)
+![](images/login-time.png?raw=true)
 
 ## Cookies and Privacy
 
@@ -207,12 +207,11 @@ On the other side, cookies are pretty much essential to our way of interacting w
 
 We briefly touched the URL and it's parameters but we haven't really talked about this. I also quickly skimmed over the Status-Codes and the HTTP-Verbs, but both of them you can learn more about later down. But before you start looking into that, I want to cover URLs and "request parameters".
 
-When we connected to the server and asked for a Resource we were using this weird '/something?x=1'-notation. This is called the resource-path and is part of the URL (Uniform resource locator). The features and caveats of URL is a tutorial by itself, but what you have to know is that this path is how the server identifies, which "resource" you are trying to access.
+When we connected to the server and asked for a Resource we were using this weird `/something?x=1`-notation. This is called the resource-path and is part of the URL (Uniform resource locator). The features and caveats of URL is a tutorial by itself, but what you have to know is that this path is how the server identifies, which "resource" you are trying to access.
 
-It is generally split into two parts, separated by (the first)
- '?': the path and parameters. The Path has to start with a a slash (`/`), parameters are optional. While the path dictates which resource to load, the paramter are generally passed to the execution of that resource access. Parameters come in the form of `key=value`-pairs, separated by an ampersand (`&`). Which parameters are given and the effects they have are totally resource-implementation-specific and are not dictated by the HTTP specificiation.
+It is generally split into two parts, separated by (the first) `?`: the path and parameters. The Path has to start with a a slash (`/`), parameters are optional. While the path dictates which resource to load, the paramter are generally passed to the execution of that resource access. Parameters come in the form of `key=value`-pairs, separated by an ampersand (`&`). Which parameters are given and the effects they have are totally resource-implementation-specific and are not dictated by the HTTP specificiation.
 
-In our examples above, when logging in, we are using url-parameters to tell the `login-`resource what username and password we have. 
+In our examples above, when logging in, we are using url-parameters to tell the `login-`resource what username and password we have.
 
 
 ## Other topics to discover
