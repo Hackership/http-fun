@@ -1,28 +1,100 @@
-from flask import Flask, request, make_response, session
+from flask import Flask, request, make_response, session, abort
 app = Flask(__name__)
+
+from datetime import datetime
+
+
+ASCII_HELLO = """
+.................##...##..######..##.......####....####...##...##..######..........######...####..................
+.................##...##..##......##......##..##..##..##..###.###..##................##....##..##.................
+.................##.#.##..####....##......##......##..##..##.#.##..####..............##....##..##.................
+.................#######..##......##......##..##..##..##..##...##..##................##....##..##.................
+..................##.##...######..######...####....####...##...##..######............##.....####..................
+..................................................................................................................
+.........##..##...####....####...##..##..######..#####....####...##..##..######..#####.....##.....####..........  
+.........##..##..##..##..##..##..##.##...##......##..##..##......##..##....##....##..##....##....##.............  
+.........######..######..##......####....####....#####....####...######....##....#####......#.....####..........  
+.........##..##..##..##..##..##..##.##...##......##..##......##..##..##....##....##..................##.........  
+.........##..##..##..##...####...##..##..######..##..##...####...##..##..######..##...............####..........  
+................................................................................................................  
+.................##..##..######..######..#####...........######..##..##..##..##.................................  
+.................##..##....##......##....##..##..........##......##..##..###.##.................................  
+.................######....##......##....#####...........####....##..##..##.###.................................  
+.................##..##....##......##....##..............##......##..##..##..##.................................  
+.................##..##....##......##....##..............##.......####...##..##.................................  
+................................................................................................................  
+"""
+
+### Hello world, Chapter 1
 
 @app.route("/")
 def hello():
+    if request.headers.get("User-Agent") == "Terminal":
+        return ASCII_HELLO
+
     return "Hello World!"
 
-@app.route("/", subdomain="blog")
-def hello_blog():
-    return "Welcome to my awesome blog!"
 
+### Playing with cookies
+### In order of appereance
 
-@app.route('/public_cookie')
-def set_name():
-    name = request.args.get("name")
+@app.route('/cookie/set')
+def cookies_set():
+    name = request.args.get("name", "Test")
     resp = make_response("Name accepted")
     resp.set_cookie("name", name)
     return resp
 
-@app.route('/secret_cookie', methods=['POST', 'GET'])
-def secret_cookie():
-    if request.method == 'POST':
-        session['secret'] = request.form['secret']
 
-    return "The serect is '{}'".format(session.get('secret', ''))
+@app.route('/cookie/secret-room')
+def cookies_secret_room():
+    name = request.cookies.get("username", False)
+
+    if not name:
+        abort(401)
+
+    resp = make_response("Hello {}".format(name))
+    return resp
+
+
+@app.route('/cookie/login')
+def cookies_login():
+    name = request.args.get("username", False)
+    password = request.args.get("password", False)
+    print name, password
+    if not password == "password" or not name:
+        abort(401)
+
+    resp = make_response("You are now authorized")
+    resp.set_cookie("username", name)
+    return resp
+
+### Sessions
+
+@app.route("/session/secret-room")
+def session_secret():
+    name = session.get("username", False)
+    if not name:
+        abort(401)
+
+    resp = make_response("""Hello {},
+You logged in at {}
+""".format(name, session.get("login-time")))
+    return resp
+
+
+@app.route('/session/login')
+def session_login():
+    name = request.args.get("username", False)
+    password = request.args.get("password", False)
+    print name, password
+    if not password == "password" or not name:
+        abort(401)
+
+    resp = make_response("You are now authorized")
+    session['username'] = name
+    session['login-time'] = datetime.now()
+    return resp
 
 
 if __name__ == "__main__":
