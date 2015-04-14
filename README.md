@@ -226,7 +226,7 @@ HTTP, in its first version, only knows about `GET`, `POST` and `HEAD`, the secon
 
 On its lowest basis HTTP is implemented under the CRUD-Principles of accessing resources. This essentially means, that everything is a resource and the main ways to connect to them is by either reading it (`GET`), creating a resource (`POST`), writing to the resource (`PUT`) or deleting it (`DELETE`).
 
-### An example
+#### An example
 
 Let's take our simple `/resource_manager` for example, which lists things I own in various categories. When we try to read its contents, we query it with a `GET` method:
 
@@ -256,10 +256,10 @@ It is also common practice that a PUT on the outer object resets the entire reso
 
     http -v --session resource_test PUT http://http-fun.hackership.org/resource_manager/ dog=jake bag=tote
 
-These are the basic ways to interact with http-resources. And although it is rather simple (four main methods), it is an incredibly powerful system and the basis of most [Restful APIs](#Restful (API) Design)
+These are the basic ways to interact with http-resources. And although it is rather simple (four main methods), it is an incredibly powerful system and the basis of most [Restful APIs](#restful-api-design)
 
 
-### Extra Verbs
+#### Extra Verbs
 
 We have two more verbs to briefly look into: `HEAD` and `OPTIONS`.
 
