@@ -97,6 +97,37 @@ def session_login():
     return resp
 
 
+@app.route('/resource_manager', methods=['GET', 'POST', 'PUT'])
+def resource_manager():
+    if "resources" not in session:
+        session["resources"] = {"car": "mustang",
+                                "cake": "cheesecake",
+                                "drink": "zombie"}
+    method = request.method
+    if request.method == 'PUT':
+        session['resources'] = request.form
+
+    elif request.method == 'POST':
+        for key, value in request.form.iteritems():
+            session['resources'][key] = value
+
+    return "Your current resources:\n   {}".format(
+                "\n   ".join(map(lambda x: ": ".join(x),
+                    session["resources"].items())))
+
+
+@app.route('/resource_manager/<item>', methods=['POST', 'PUT', 'GET', 'DELETE'])
+def resource_item_manager(item):
+    if "resources" not in session:
+        session["resources"] = {}
+
+    if request.method == 'DELETE':
+        del session['resources'][item]
+    elif request.method == "PUT":
+        session['resources'][item] = request.data
+    return session['resources'].get(item, "")
+
+
 if __name__ == "__main__":
     app.secret_key = "complicatedHash"
     app.run(debug=True, host="0.0.0.0", port=8080)

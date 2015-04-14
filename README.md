@@ -218,8 +218,67 @@ In our examples above, when logging in, we are using url-parameters to tell the 
 
 Pick any of the following topics you are interested in understanding. Just follow the instructions to explore them, how they work and what they are used for.
 
+### HTTP Verbs
+
+We haven't talked much about the `VERB` in the HTTP-Protocol yet. It essentially tells the server the way you want to access a resource. This often means, that for different "verbs", the server executes different parts of the progamme.
+
+HTTP, in its first version, only knows about `GET`, `POST` and `HEAD`, the second version (1.1) added `OPTIONS`, `PUT`, `DELETE`, `TRACE` and `CONNECT`. There are more extensions to the protocol (for example WebDav) but for this document, we will focus on the main foure `GET`, `POST`, `PUT`, `DELETE` and briefly cover `OPTIONS`, `HEAD` and the later added `PATCH` – not all of which are supported by all servers.
+
+On its lowest basis HTTP is implemented under the CRUD-Principles of accessing resources. This essentially means, that everything is a resource and the main ways to connect to them is by either reading it (`GET`), creating a resource (`POST`), writing to the resource (`PUT`) or deleting it (`DELETE`).
+
+### An example
+
+Let's take our simple `/resource_manager` for example, which lists things I own in various categories. When we try to read its contents, we query it with a `GET` method:
+
+
+    http -v --session resource_test http://http-fun.hackership.org/resource_manager
+
+
+I can also query one item specifically:
+
+    http -v --session resource_test http://http-fun.hackership.org/resource_manager/cake
+
+Now, I can add new items, by posting to the resource manager and add a new items using the 'POST' method
+
+    http -v --form --session resource_test http://http-fun.hackership.org/resource_manager dog=jake
+
+As you can see, when we add parameters after a space in the commandline, httpie understands that we want to send a body and automatically switches to the "POST"-method. By setting the `--form`-flag, we tell it to the use "key=value"-form notation. Other notations is `--json` (but our resource manager doesn't understand that).
+
+Now, if we look at the output, we can see, that we created a new resource. We can also overwrite the resource by sending a `PUT` to the newly created resource:
+
+    echo 'jake' | http -v --session resource_test PUT http://http-fun.hackership.org/resource_manager/dog
+
+Or delete the resource:
+
+    http -v --session resource_test DELETE http://http-fun.hackership.org/resource_manager/dog
+
+It is also common practice that a PUT on the outer object resets the entire resource. Our server has that implementation, too:
+
+    http -v --session resource_test PUT http://http-fun.hackership.org/resource_manager/ dog=jake bag=tote
+
+These are the basic ways to interact with http-resources. And although it is rather simple (four main methods), it is an incredibly powerful system and the basis of most [Restful APIs](#Restful (API) Design)
+
+
+### Extra Verbs
+
+We have two more verbs to briefly look into: `HEAD` and `OPTIONS`.
+
+**Options** essentially tells you which verbs are available on this resource. You can find it in the `Allow`-header.
+
+Want to see an example?
+
+    http -v --session resource_test OPTIONS http://http-fun.hackership.org/resource_manager/
+
+
+**HEAD** on the other hand, executes a `GET`-Request on the resource but instead of returning the entire content, only returns the headers.
+
+Want to see an example?
+
+    http -v --session resource_test HEAD http://http-fun.hackership.org/resource_manager/
+
 
 ### HTTP Status Codes
+
 
 ### HTTP-Redirects
 
