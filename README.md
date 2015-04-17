@@ -390,11 +390,57 @@ Another very common usage of sending the moved-temprorary code, is to point the 
 
 ### Basic Authentication
 
+Although nowadays most systems use a Cookie-Based System for authentication as they allow full control to the backend on how to authorize you in the beginning – shall be via Twitter, Facebook, Google or Username + Password – HTTP actually contains a simple authentication system.
+
+In this system the client adds the `Authorization`-header to the request and server accepts or denies access depending on the value of that header. In its most basic form, this uses a mechanism called "Basic Authenication" in which the client sends a non-encrypted username-password pair. As this means, we are sending the password as plaintext over the page, which everyone can read, this isn't considered a very secure mechanism. But beause of its easy configuration, it is still widely in use, primarely to secure to site from bots and random scanners.
+
+So let's play with it first. At `/auth/basic` we have a resource, you can only access if you provide user-name and password, otherwise we will receive a 401. If we send a normal request, we are blocked from seeing the content:
+
+
+    http --verbose http://http-fun.hackership.org/auth/basic
+
+We can instruct `httpie` to add username and password as follows:
+
+    http --verbose http://username:password@http-fun.hackership.org/auth/basic
+
+In this request, you can find the "Authorization"-Header:
+
+```
+Authorization: Basic YmVuOnRlc3Q=
+```
+
+Although this looks cryptic, basic authentication really is just "username:password" in a base64encoding. Anyone can recover this information easily.
+
+This is why the HTTP protocol contains a second authentication mechanism by default, called "digest". Let's try to get going with this one on the `/auth/digest` URL. Accessing this one with our 'basic auth', yields a very interesting result. Among others we find a
+
+```
+WWW-Authenticate: Digest nonce="cfc82b49f2bd8201", realm="Example Auth", qop="auth"
+```
+
+header. This tells us, that the server requires a digest-authentication. We won't get far with our bad basic-plain-text here. Let's switch on digest auth on httpie:
+
+
+    http --verbose --auth-type digest http://user:password@localhost:8080/auth/digest
+
+You'll see in the header that we send out a much more complex "Authorize" string with many parameters and values. And although this overall looks much more complex, it isn't that much more secure. Not only does it use the broken MD5 and SHA algorightms, in order to make it more secure every request is signed individually (as you can see in the parameters) increasing the calculation overhead a lot.
+
+If you want to learn more on how this is calculated, I recommend this really good Wikipedia article about [digest auth](https://en.wikipedia.org/wiki/Digest_access_authentication).
+
+
 ### Content Negotiation
 
-### User Agent Tricks (SEO optimised page serving)
+ - switch from text to json to gzip
+
+### User Agent Tricks (SEO and mobile optimised page serving)
+
+ - serve different files for different browsers
+ - detecting mobile and redirect
+ - detecting google bot
 
 ### Caching
+
+ - explain the http-caching headers
+ - return 304 if applicable
 
 ### AJAX
 

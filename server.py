@@ -177,6 +177,38 @@ def redirect_login():
         return redirect('/redirect/restricted?accepted=1', 303)
     return "You need to POST 'username=test' to this page to login"
 
+# HTTP Auth
+
+from functools import wraps
+import authdigest
+import flask
+
+class FlaskRealmDigestDB(authdigest.RealmDigestDb):
+    def requires_auth(self, f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            request = flask.request
+            if not self.isAuthenticated(request):
+                return self.challenge()
+
+            return f(*args, **kwargs)
+
+        return decorated
+
+authDB = FlaskRealmDigestDB('Example Auth')
+authDB.addUser('user', 'password')
+
+@app.route('/auth/basic')
+def auth_restricted():
+    if not request.headers.get("Authorization"):
+        abort(401)
+    return "Access Granted"
+
+@app.route("/auth/digest")
+@authDB.requires_auth
+def auth_digest():
+    return "Yay, you are {}".format(request.authorization.username)
+
 
 if __name__ == "__main__":
     app.secret_key = "complicatedHash"
