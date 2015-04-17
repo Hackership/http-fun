@@ -499,11 +499,70 @@ Are very uncommon in practice. Primarely because they are very cumbersome and sc
 
 You can learn more about content negotiation and how browsers handle it on this great [Mozilla Developer Network site](https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation).
 
+#### Compressed Content
+
+One other really important header for content negotiation is the `Accept-Encoding`-header. As so much of the content, which is send over HTTP is text-driven, there is a clear opportunity for compression to lower the bandwidth used.
+
+During the content negotiation, the client can also inform the server any compression they are able to accept. Allowing the server to compress the content before sending it over.
+
+Note: In Web-Development the compression is typically handeled by a load-balancing instance in between the app and the server, for example _Apache httpd_ or _nginx_. They are usually faster and handle this header transparently to the webapp and the client. For the purpose of education, we've implemented zipped content into our app, but that is rather odd to see in production...
+
+Let's redirect our attention to a resource that has gzip-encoding enabled: `/content/compressed`. Aside from sending the body gzip-encoded, it behaves exactly the same as `/content/simple` did before. So you can compare requests to both and the results, you'll get back. Now run:
+
+    http --verbose http://localhost:8080/content/compressed
+
+**Note**: If `httpie` finds the appropriate `Content-Encoding`-Header send by the server, it will automatically decode the content before showing. So, you can only see the difference by looking at the headers send back.
+
+
+**Excersise**: Do you notice any difference to the same call to `/content/simple`? Does `httpie` send any `Accept-Encoding`-Header? If so, what is it set to? What happens if we overwrite the header by adding a specific `Accept-Encoding:'deflate'` to the httpie command?
+
+
+You might have noticed that the content size with gzip is larger than the content of the raw text. This is a caused by gzip adding overhead to the content. This, in addition to the extra performance impact this has, is why in production content that is smaller than 500bytes usually is not compressed by the server even if the client supports it.
+
+If you want to learn more about content negotiation, [MDN has an excellent article about it](https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation), including the various ways in which browsers implement it and their behaviour differs. This article also covers the `Accept-Language`-header we skipped here for the sake of keeping it focussed.
+
+
 ### User Agent Tricks (SEO and mobile optimised page serving)
 
- - serve different files for different browsers
- - detecting mobile and redirect
- - detecting google bot
+Although you could considered it part of content negotiation, serving different pages depending on the user agent, hasn't initially been the focus of the `User-Agent`-header. [As MDN clearly states](https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation#The_User-Agent.3A_header): "_though there are legitimate uses of this header for selecting content, it is considered bad practice to rely on it to define what features are supported by the user agent_".
+
+In here, we want to focus on the clearly legitimate cases only: **to know whether a search bot is crawling our website or if someone is accessing the page from a mobile device**. In both of these cases it is very legit to serve different content than to a normal user. For the first because a crawling-optimised site should be faster and more brief to load, for the second a stripped down version as the bandwidth and CPU of mobile devices is more limited.
+
+In a way this feature works very similar to the previously discussed `Accept-Content`-header as the server will match the given `User-Agent`-String and send us different content depending on what it finds there. Remember the `User-Agent: Terminal` trick from the beginning? This was essentially it: serving different content based on the browser.
+
+One problem with this approach is that browser are notourisly bad at giving a good description: in order to be served sites compatible with other products they have been adding more and more strings – leading to a huge mess and making browser and platform detection a science by itself. Just the various forms of [Mozilla-Products](https://developer.mozilla.org/en-US/docs/Web/HTTP/Gecko_user_agent_string_reference) have a list of over 20 different strings, excluding the various version numbers they could have.
+
+Fortunately, this practice has declined recently. With the emergence of use cases like mobile, more browser are inclined to make it easy to detect them. In our use cases we will detect a any mobile device by learning if they have `mobi` in their User Agent.
+
+Go ahead, try it out – this is a fake user agent, which should be detected as mobile:
+
+    http http://localhost:8080/useragent User-Agent:' Mobile/5G77 Safari/525.20'
+
+Go, try it out with a few more User Agent string:
+
+ - Safari on hungarian iPhone: `Mozilla/5.0 (Mozilla/5.0 (iPhone; U; CPU iPhone OS 2_0_1 like Mac OS X; hu-hu) AppleWebKit/525.18.1 (KHTML, like Gecko) Version/3.1.1 Mobile/5G77 Safari/525.20 `
+ - Internet Explorer 10.6: `Mozilla/5.0 (compatible; MSIE 10.6; Windows NT 6.1; Trident/5.0; InfoPath.2; SLCC1; .NET CLR 3.0.4506.2152; .NET CLR 3.5.30729; .NET CLR 2.0.50727) 3gpp-gba UNTRUSTED/1.0`
+
+ - Firefox 31: `Mozilla/5.0 (Windows NT 6.1; WOW64; rv:31.0) Gecko/20130401 Firefox/31.0`
+
+You can find plenty more on [useragentstring.com/pages/useragentstring.php](http://useragentstring.com/pages/useragentstring.php) (as well as an analyse tool).
+
+You see, these strings became increasingly complex, which is why pattern matching them is in general discouraged and should be used with **a lot of caution**.
+
+#### Matching the crawlers
+
+What is relatively safe though, is serving different search-engine optimised content to search engines. Search-Engines use web-browser-like tools – called crawlers – to scan and index websites for them. All major search engines have been very vocal about what the User String for each is to encourage web hosters to allow them to get through.
+
+Google for example uses the term ["Googlebot"](http://useragentstring.com/Googlebot2.1_id_71.php), while Bing identifies as ["bingbot"](http://useragentstring.com/pages/Bingbot/). It is relatively safe to match for these terms and serve different content based on that. It is in their interest to not come with a different User Agent, as that might be blocked or wrongly accounted to website usage stats.
+
+Here are some search engine strings our server is able to detect:
+
+ - Googlebot: `Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)`
+ - Bing: `Mozilla/5.0 (compatible; bingbot/2.0 +http://www.bing.com/bingbot.htm)`
+ - Yandex:  `Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)`
+
+
+With the same detection any server can serve different content to mobile or crawlers, or deny access at all (although that is discouraged). But if you want to make sure the Googlebot never indexes your site, this is a way to do it.
 
 ### Caching
 

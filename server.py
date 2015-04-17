@@ -214,10 +214,11 @@ def auth_restricted():
 def auth_digest():
     return "Yay, you are {}".format(request.authorization.username)
 
+
 # Content negotiation
 
 @app.route("/content/simple")
-def content_data():
+def content_simple():
     result = dict(hello="world", peter='cat')
     mtype = request.accept_mimetypes.best
     if mtype.endswith("json"):
@@ -227,7 +228,42 @@ def content_data():
         resp = make_response("\n".join([": ".join(x) for x in result.iteritems()]))
     return resp
 
-    # return Re
+
+import cStringIO, gzip
+
+@app.route("/content/compressed")
+def content_compressed():
+    response = content_simple()
+    if response.status_code != 200 or 'Content-Encoding' in response.headers\
+        or "gzip" not in request.headers.get('Accept-Encoding', '').lower():
+        return response
+
+    gzip_buffer = cStringIO.StringIO()
+    gzip_file = gzip.GzipFile(mode='wb', compresslevel=6, fileobj=gzip_buffer)
+    gzip_file.write(response.data)
+    gzip_file.close()
+    response.data = gzip_buffer.getvalue()
+    if not request.args.get("disableContentHeader"):
+        response.headers['Content-Encoding'] = 'gzip'
+    response.headers['Content-Length'] = str(len(response.data))
+    return response
+
+# User Agent detection
+
+@app.route("/useragent")
+def useragent():
+    agent = request.headers.get("User-Agent", "").lower()
+    for ua in ["googlebot", "yandexbot", "bingbot"]:
+        if ua in agent:
+            return "Hello {} crawler. Nice to detect you".format(ua)
+
+    if 'mobil' in agent:
+        return "Mobile optimised website"
+
+    return "Normal website"
+
+
+
 
 if __name__ == "__main__":
     config = dict(port=8080, debug=True)
