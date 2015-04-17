@@ -429,7 +429,75 @@ If you want to learn more on how this is calculated, I recommend this really goo
 
 ### Content Negotiation
 
- - switch from text to json to gzip
+As HTTP only sends "a representation" of its resource, the server and client need a way to discuss, what the format of that representation should be. This process called _content negotiation_ and – as so many other things – happens through the usage of specific, standardised header fields. This header is the `Accept:`-header you might have noticed before (as `httpie` sends it by default).
+
+In general there are three main ways, in which this negotiation can happens:
+
+ 1. the client sends the specific headers of what it supports and the server figures out, which one to pick (server-driven negotiation)
+ 2. the server might respond with a `300 Multiple Choice` or `406 Not Acceptable` to alert the client, they have to choose a different content type (agent-driven negotiation)
+ 3. a cache does this in between (transparent negotiation)
+
+Let's start by looking at the most commonly used version: the client sending the header and the server figures out an appropriate response.
+
+Please send a normal request to the endpoint `/content/simple`:
+
+    http --verbose http://localhost:8080/content/simple
+
+You should see a text-formatted response as follows:
+
+```
+HTTP/1.0 200 OK
+Content-Length: 23
+Content-Type: text/html; charset=utf-8
+Date: Fri, 17 Apr 2015 20:04:24 GMT
+Server: Werkzeug/0.10.4 Python/2.7.5
+
+peter: cat
+hello: world
+```
+
+In the content header you can see the result of the "negotiation", the `Content-Type` the server choose in the end is `text/html` in the `utf-8` encoding.
+
+This server chose this as the preferred response, beause the client – you – send an i-accept-anything-`*/*`-`Accept` header. We can also overwrite any header `httpie` sends by adding it to the end of the request. For example, let's tell the server we only accept 'application/json' format:
+
+    http --verbose http://localhost:8080/content/simple Accept:'application/json'
+
+Voila
+
+```
+HTTP/1.0 200 OK
+Content-Length: 34
+Content-Type: application/json
+Date: Fri, 17 Apr 2015 20:07:23 GMT
+Server: Werkzeug/0.10.4 Python/2.7.5
+
+{
+    "hello": "world",
+    "peter": "cat"
+}
+```
+
+The server responded with the same data, but formatted in `JSON` as we requested and the responding `Content-Type` tells us.
+
+We can also give multiple formats, the client supports and let the server decide which one to pick. We do that by giving multiple values delimited with a comma (`,`) as follows:
+
+    http --verbose http://localhost:8080/content/simple Accept:'text/plain, application/json'
+
+Excercise: Can you argue, which format the server response will be? What if you change the order of the entries? Try it.
+
+#### Quality for choosing
+
+Right now, if the server finds multiple formats applicable it will just pick the first in line. Althought that might be fine for the client, the client might actually prefer some formats over others. In order to let the server know about that, we can give each mimetype a quality-value `;q=` to order them by. The default quality is `1.0`. So if we wanted to discourage the usage of `text/plan` from our previous example, no matter the order, we could request:
+
+    http --verbose http://localhost:8080/content/simple Accept:'text/plain; q=0.9, application/json'
+
+Nice, eh?
+
+#### Agent and transparent Negotiation
+
+Are very uncommon in practice. Primarely because they are very cumbersome and scale rather bad. As the client doesn't know the formats they can ask for when they receive an `300 Multiple Choices`, the have to potentially ask for a lot before it eventually fails. More commonly you'll find `406 Not Accatable` as it might be used in conjunction with your client asking an API to deliver in a format (like `xml`) that is not, or no longer, supported. In which case you probably want to upgrade your code ;) .
+
+You can learn more about content negotiation and how browsers handle it on this great [Mozilla Developer Network site](https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation).
 
 ### User Agent Tricks (SEO and mobile optimised page serving)
 

@@ -2,6 +2,8 @@ from flask import Flask, request, make_response, session, abort, redirect
 app = Flask(__name__)
 
 from datetime import datetime
+import json
+import os
 
 
 ASCII_HELLO = """
@@ -195,8 +197,10 @@ class FlaskRealmDigestDB(authdigest.RealmDigestDb):
 
         return decorated
 
+
 authDB = FlaskRealmDigestDB('Example Auth')
 authDB.addUser('user', 'password')
+
 
 @app.route('/auth/basic')
 def auth_restricted():
@@ -204,12 +208,31 @@ def auth_restricted():
         abort(401)
     return "Access Granted"
 
+
 @app.route("/auth/digest")
 @authDB.requires_auth
 def auth_digest():
     return "Yay, you are {}".format(request.authorization.username)
 
+# Content negotiation
+
+@app.route("/content/simple")
+def content_data():
+    result = dict(hello="world", peter='cat')
+    mtype = request.accept_mimetypes.best
+    if mtype.endswith("json"):
+        resp = make_response(json.dumps(result))
+        resp.content_type = "application/json"
+    else:
+        resp = make_response("\n".join([": ".join(x) for x in result.iteritems()]))
+    return resp
+
+    # return Re
 
 if __name__ == "__main__":
+    config = dict(port=8080, debug=True)
+    if os.getenv('production'):
+        config["host"] = "0.0.0.0"
+
     app.secret_key = "complicatedHash"
-    app.run(debug=True, host="0.0.0.0", port=8080)
+    app.run(**config)
