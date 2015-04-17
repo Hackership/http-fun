@@ -1,4 +1,4 @@
-from flask import Flask, request, make_response, session, abort
+from flask import Flask, request, make_response, session, abort, redirect
 app = Flask(__name__)
 
 from datetime import datetime
@@ -126,6 +126,56 @@ def resource_item_manager(item):
     elif request.method == "PUT":
         session['resources'][item] = request.data
     return session['resources'].get(item, "")
+
+# Status code lol cats
+@app.route('/status/<int:code>')
+def status_codes(code):
+    resp = make_response('<img src="http://httpcats.herokuapp.com/{}" />'.format(code), code)
+    if code in [301, 302, 307]:
+        resp.location = "http://www.hackership.org/"
+    return resp
+
+
+# Redirects
+# Status code lol cats
+@app.route('/redirect/simple')
+def redirect_simple():
+    return redirect("/")
+
+
+@app.route('/redirect/bounce')
+def redirect_bounce():
+    return redirect('/redirect/back')
+
+
+@app.route('/redirect/back')
+def redirect_back():
+    return redirect('/redirect/bounce')
+
+
+@app.route('/redirect/permanent')
+def redirect_permanent():
+    return redirect('/', 301)
+
+
+@app.route('/redirect/old/<path:path>')
+@app.route('/redirect/old')
+def redirect_old(path=''):
+    return redirect('http://www.hackership.org/' + path, 301)
+
+
+@app.route('/redirect/restricted')
+def redirect_restricted():
+    if not request.args.get("accepted"):
+        return redirect('/redirect/login', 303)
+    return "Access granted!"
+
+
+@app.route('/redirect/login', methods=["POST", "GET"])
+def redirect_login():
+    if request.method == "POST":
+        return redirect('/redirect/restricted?accepted=1', 303)
+    return "You need to POST 'username=test' to this page to login"
 
 
 if __name__ == "__main__":

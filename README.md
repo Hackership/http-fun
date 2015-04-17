@@ -279,8 +279,114 @@ Want to see an example?
 
 ### HTTP Status Codes
 
+Another aspect we've just quietly ignored until know are the "Status Codes" the server responds with. These are three character long number indicating whether our access worked of it didn't and provides more context about them. Each of these numbers is followed with the descriptive text for the code as the standard requires.
+
+The most prominently known is probably the response code `404 Not Found`. But in general the number as part of one of these three categories:
+
+#### Success 2xx
+
+Starting with a 2 indicates a success of the request. The most common being the `200 OK` status code, indicating that everything went fine and you can find the resource representation in the body of the response.
+
+#### Error 4xx, 5xx
+
+Error Codes starting with 4 and 5 indicate that something went wrong. Where 4xx indicates the error is on the client side while 5xx are server side errors.
+
+Among those the most widely known are the `404 Not Found` indicating the resource can't be found or read, `401 Unauthorized` and `403 Forbidden` indicating the client doesn't have the authorization to access this resource.
+
+On the server side the most commonly found is the general `500 Internal Server Error` and `502 Bad Gateway`. Bad Gateway is often thrown from in-between parties, when they are unable to read from the remote.
+
+#### Redirects 3xx
+
+This class of status codes indicates that the resource exists but additional action is required to access them. `301 Moved Permanently` and `307 Temporary Redirect` for example return a header "Location" telling the client where to look for the request instead.
+
+One other important status code in this category is `304 Not modified`, which is used to learn about the cache is valid.
+
+In most cases, there is no body attached to these responses as they require further action anyways. However, you still can provide a body.
+
+### Full List
+
+These are just a few, picked response codes. We will explore more when we go into specific topics (below) to see how these help us implement certain behaviours. 
+
+If you are interested to read a full list, including vendor specific additions, please [see this great wikipedia article](https://en.wikipedia.org/wiki/List_of_HTTP_status_codes).
+
+For, we just want to redirect our browser to the awesome website on our server, to watch some lolcats:
+
+    http://http-fun.hackership.org/status/200
+
+Where does it redirect us to?
+
+Bonus challenge: Can you find the teapot?
+
 
 ### HTTP-Redirects
+
+As previously mentioned, there are certain status codes, which we can use to _redirect_ the browser/client somewhere else.
+
+Here we want to focus on these error codes, learn there differences and see how they are being used.
+
+If we try to access `/redirect/simple` on our server with http:
+
+    http --verbose http://localhost:8080/redirect/simple
+
+We'll see the most simple version of a redirect:
+
+![](images/302-found.png?raw=true)
+
+The server responds with the status code "302 Found" and through the "Location"-header tells the client where the resource is to be found now. In our case it just redirects us back to the main page at `/` .
+
+#### Let's loop
+
+By the way, if you were to switch on the `--follow` flag when running http, you'll only see the end-resulting request. As request are independent from each other a second request could still return you a redirect, the client should follow first.
+
+Which leads to a problematic potential, as we will see next, when we try to connect to `/redirect/bounce` with the `--follow` flag:
+
+
+    http --follow --verbose http://localhost:8080/redirect/bounce
+
+It'll come back with a `TooManyRedirects: Exceeded 30 redirects.` .
+
+What just happened? Removing the follow flag, we see that `/redirect/bounce` takes us to `/redirect/back`:
+
+```
+Location: http://http-fun.hackership.org/redirect/back
+```
+
+Doing the same on `/redirect/back`, we see it points us to 
+
+```
+Location: http://http-fun.hackership.org/redirect/bounce
+```
+
+Darn. We are an endless-redirection loop, as bounce will tell us to check again with `/redirect/back`. In order to not get stuck in these loops, clients keep track of the amount of redirects they've followed and usually break on a hard-limit to avoid going on forever. In this case, it appears that `httpie` takes up to 30 redirects. Browser often show a simimlar error message, when they get stuck in such a loop.
+
+#### Permanent redirects
+
+But back to the more common cases. So, in the previous, we had a reponse (to `/redirect/simple`) that told us to `/` with a status code `302 Found`. 
+
+As you remember from before, there is a `301 Moved permanently`, therefor this must mean it is _temporary_ right? Well, it was, in the first edition for the standard (HTTP/1.0) and it still does serve under this use case. But because industry found other use cases and put them under this status code for a while, in version 1.1 it was renamed to the broader "Found" and more specific status codes `303` to `307` were added.
+
+These specific cases you can read up on on wikipedia if you like, but for our purpose we will only look at `303 See other` and `307 Temprorary Redirect` of HTTP/1.1 standard (although our server respones with version 1.0 as we speak).
+
+Let's get back to our previous example where we received a 302. Assuming this means it is a temporary code, the client shall forward to the other but not keep this information cached. With `301` on the other hand, the client is allowed to assume that this move is permanent and if they were to request the same URL again, they could just skip ahead and go to the end result.
+
+For the server, this is just a question of difference in status codes. But it is an important feature, if you were to move, for example the server, domain or just an entire folder.
+
+See this simple permanent move:
+
+    http --verbose http://localhost:8080/redirect/permanent
+
+Now, let's assume we were to move an entire folder and all siblings but want old URLs to still react and tell them we have moved to a different server. For this, our server matches the URL and redirect the entire path. Try fetching:
+
+    http --verbose http://localhost:8080/redirect/old/
+
+**Excercise**: Where did our path `/redirect/old/about` go? Try to argu first what you expect to happen, then make a request and see if you were right?
+
+#### Redirects in Authentication
+
+Another very common usage of sending the moved-temprorary code, is to point the client towards a login-page because they requested a page they can't access. This, as well as redirecting the User back after they successfully logged in, is the primary use case for the `303 See Other`-use case (although you might still see `302 Found` in practice).
+
+**Excerise**: See, what happens if you try to access `/redirect/restricted`.
+
 
 ### Basic Authentication
 
@@ -308,6 +414,8 @@ Want to see an example?
 
 
 ## Honourable mentions
+
+### Reverse Proxies
 
 ### Do Not Track
 
