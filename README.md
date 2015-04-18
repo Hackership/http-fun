@@ -29,15 +29,15 @@ You will need Python and PIP. If you don't have Python yet, download and install
 
 We now need to install [httpie](https://pypi.python.org/pypi/httpie/0.9.2) using pip on the commandline by typing:
 
-    pip install --upgrade httpie
+```console
+pip install --upgrade httpie
+```
 
 And we are ready to go.
 
 ### Installing Firefox
 
-Technically this should all also work with Chrome, Chromium and Safari, but all are slightly different in where features are located. This guide will only directly show and explain these features using Firefox. Also, you should just have a browser which is actually free, so ...
-
-   [getfirefox.com](http://www.getfirefox.com)
+Technically this should all also work with Chrome, Chromium and Safari, but all are slightly different in where features are located. This guide will only directly show and explain these features using Firefox. Also, you should just have a browser which is actually free, so ... [getfirefox.com](http://www.getfirefox.com)
 
 
 ## Let the fun begin
@@ -46,9 +46,9 @@ Technically this should all also work with Chrome, Chromium and Safari, but all 
 
 Open a [terminal/commandline/shell/cmd.exe](http://opentechschool.github.io/python-beginners/en/getting_started.html#opening-a-console-on-mac-os-x) and start telnet
 
-*Note*: If you are [running your own server](#Running your own server), use `localhost:5000` instead of `http-fun.hackership.org`.
-
-    telnet http-fun.hackership.org
+```console
+telnet http-fun.hackership.org
+```
 
 You will see it connect and waiting for input.
 
@@ -72,16 +72,20 @@ The request ends with an empty line, which signals the server it can start respo
 
 Let's reopen telnet and do a GET-Request but this time, instead of doing a double empty line, add another line after the first as follows:
 
-    GET / HTTP/1.0
-    User-Agent: Telnet
+```HTTP
+GET / HTTP/1.0
+User-Agent: Telnet
+```
 
 ![](images/with-user-agent.png?raw=true)
 
 You've just successfully send your first header to the server, telling them that you are using the _telnet_ to connect (as the "browser"). As you can see, the format for sending headers is exactly the same as for receiving them, a keyword, a colon (`:`) and the value. Multiple headers separated by a line-break. Let's do it again, this time we identify as 'Terminal' and see what happens.
 
-    GET / HTTP/1.0
-    Host: example.org
-    User-Agent: Terminal
+```HTTP
+GET / HTTP/1.0
+Host: example.org
+User-Agent: Terminal
+```
 
 You will see
 
@@ -96,7 +100,7 @@ This is the basic principle of how headers work. When you send them to the serve
 
 ## Moving to httpie
 
-Typing this up every time is kinda dreadfull and mostly an excerise for you to understand what goes on under the hood. In order to make the typing a little easier, we will use the awesome [httpie](https://pypi.python.org/pypi/httpie/0.9.2) command line http-debugger from here on up.
+Typing this up every time is kinda dreadful and mostly an exercise for you to understand what goes on under the hood. In order to make the typing a little easier, we will use the awesome [httpie](https://pypi.python.org/pypi/httpie/0.9.2) command line http-debugger from here on up.
 
 Let's do a simple request with it again, type `http -v http://http-fun.hackership.org/`:
 
@@ -108,7 +112,9 @@ Note: Per default `httpie` doesn't show our request (nor headers). Thus we are r
 
 Let's fake the User-Agent again. We can do that by adding our headers at the end of the command like this:
 
-    http -v http://http-fun.hackership.org/ User-Agent:Terminal
+```console
+http -v http://http-fun.hackership.org/ User-Agent:Terminal
+```
 
 And we are back at seeing our terminal output again.
 
@@ -120,11 +126,15 @@ One very important feature of HTTP are "cookies". You have probably heard about 
 
 To enable cookies in `httpie`, we need to specify a session for it. We do that by giving it the `--session cookie_test` parameter. Let's see what happens, when we go to the `/cookie/set`-path of our server:
 
-    http -v --session cookie_test http://http-fun.hackership.org/cookie/set?name=test
+```console
+http -v --session cookie_test http://http-fun.hackership.org/cookie/set?name=test
+```
 
 In your response, you'll find the header:
 
-    Set-Cookie: name=test; Path=/
+```HTTP
+Set-Cookie: name=test; Path=/
+```
 
 This tells our client, that the server set a cookie with the name 'name' to the value 'test'. Let's try it again, this time set the parameter 'name' to something else. Go ahead, I'll wait. Don't forget to set the `--session cookie_test` .
 
@@ -134,18 +144,22 @@ You might have noticed, that in the second request, our client has added the hea
 
 Whenever the server sends a `Set-Cookie` header our client understand that it should store this key-value pair and whenever we send to a request to this server matching the given `Path` (in this case, everything), send it back out there. Httpie stores this information in the `--session` (you sometimes also find this named a 'Cookie Jar').
 
-HTTP by itself is a stateless protocol. Meaning that we only request on resource and get a resource. The server doesn't know whether that request is part of a bigger range of requests, the context it might be run in or anything else you don't specificly provide. Cookies allow the server to identify a request or set additional information.
+HTTP by itself is a stateless protocol. Meaning that we only request on resource and get a resource. The server doesn't know whether that request is part of a bigger range of requests, the context it might be run in or anything else you don't explicitly provide. Cookies allow the server to identify a request or set additional information.
 
 A very commonly use case for this is, to keep the login information of a user around. As the client is sending back the information every time, the server can use it to identify you as you. Let's play around with this a little.
 
 Here is a page, that you can only request, once you 'logged in' into the system, try accessing it with httpie:
 
-    http -v --session cookie_test http://http-fun.hackership.org/cookie/secret-room
+```console
+http -v --session cookie_test http://http-fun.hackership.org/cookie/secret-room
+```
 
 As you can see, the server told us, we aren't authorized to access this page. Let's try to login:
 
 
-    http -v --session cookie_test http://http-fun.hackership.org/cookie/login?username=hackership&password=password
+```console
+http -v --session cookie_test http://http-fun.hackership.org/cookie/login?username=hackership&password=password
+```
 
 The server accepted our request and told us we are authorized.
 
@@ -153,22 +167,26 @@ The server accepted our request and told us we are authorized.
 
 We can see in the headers, that it set the cookie "username" to "hackership". Well, let's try to connect to the secrect-room again and see what happens:
 
-    http -v --session cookie_test http://http-fun.hackership.org/cookie/secret-room
+```console
+http -v --session cookie_test http://http-fun.hackership.org/cookie/secret-room
+```
 
-Holy kewl, we are part of the club now! The server identifies us just by using the cookie. Don't want to believe me? Run the same command again but without the `--session cookie_test`.
+Holy cow, we are part of the club now! The server identifies us just by using the cookie. Don't want to believe me? Run the same command again but without the `--session cookie_test`.
 
 ### Secure Cookies
 
 This is all cool, but if you think about it, this also quite easy to hack. Just figure out the username, add it as the set-cookie header and you are imposing as someone else:
 
-    http -v http://http-fun.hackership.org/cookie/secret-room Cookie:username=imposter
+```console
+http -v http://http-fun.hackership.org/cookie/secret-room Cookie:username=imposter
+```
 
 ![](images/imposter.png?raw=true)
 
-Well. That's not really what we want – or can allow for that matter. This is why most modern web-frameworks have a mechanic called "session"-handeling. The specific implementions differ, but in general there are two approaches:
+Well. That's not really what we want – or can allow for that matter. This is why most modern web-frameworks have a mechanic called "session"-handling. The specific implementations differ, but in general there are two approaches:
 
 **Encrypted Cookies**:
-Instead of sending plaintext, all session-information is encrypted into one long string, which is being encrypted before it sends it on the line – this is called a 'cyphertext'. When the client sends back the ciphertext, the server is able to decrypt and thus, restore the session.
+Instead of sending plaintext, all session-information is encrypted into one long string, which is being encrypted before it sends it on the line – this is called a 'ciphertext'. When the client sends back the ciphertext, the server is able to decrypt and thus, restore the session.
 
 If someone wants to impose another persons session now (or fiddle with their own), they need the encryption key or the server won't accept the content they send.
 
@@ -178,15 +196,21 @@ Instead of sending the entire session over the line (but encrypted), a lot of pl
 We have a lightweight server without a database, so it uses the first method to provide secure sessions. Let's check it out. Try to connect to `/session/secret-room` (including your current session):
 
 
-    http -v --session cookie_test http://http-fun.hackership.org/session/secret-room
+```console
+http -v --session cookie_test http://http-fun.hackership.org/session/secret-room
+```
 
 Looks, like we have login first. Well, let's do that. This time against the `/session/login`-resource.
 
-    http -v --session cookie_test http://http-fun.hackership.org/cookie/login?username=hackership&password=password
+```console
+http -v --session cookie_test http://http-fun.hackership.org/cookie/login?username=hackership&password=password
+```
 
 Can you spot the `Set-Cookie`-header in the response? Well, that looks like a bunch of garbage, doesn't it? But we know it is the value of 'session'. Let's see if we can connect now:
 
-    http -v --session cookie_test http://http-fun.hackership.org/session/secret-room
+```console
+http -v --session cookie_test http://http-fun.hackership.org/session/secret-room
+```
 
 Looks like we can:
 
@@ -209,7 +233,7 @@ We briefly touched the URL and it's parameters but we haven't really talked abou
 
 When we connected to the server and asked for a Resource we were using this weird `/something?x=1`-notation. This is called the resource-path and is part of the URL (Uniform resource locator). The features and caveats of URL is a tutorial by itself, but what you have to know is that this path is how the server identifies, which "resource" you are trying to access.
 
-It is generally split into two parts, separated by (the first) `?`: the path and parameters. The Path has to start with a a slash (`/`), parameters are optional. While the path dictates which resource to load, the paramter are generally passed to the execution of that resource access. Parameters come in the form of `key=value`-pairs, separated by an ampersand (`&`). Which parameters are given and the effects they have are totally resource-implementation-specific and are not dictated by the HTTP specificiation.
+It is generally split into two parts, separated by (the first) `?`: the path and parameters. The Path has to start with a a slash (`/`), parameters are optional. While the path dictates which resource to load, the parameter are generally passed to the execution of that resource access. Parameters come in the form of `key=value`-pairs, separated by an ampersand (`&`). Which parameters are given and the effects they have are totally resource-implementation-specific and are not dictated by the HTTP specification.
 
 In our examples above, when logging in, we are using url-parameters to tell the `login-`resource what username and password we have.
 
@@ -231,30 +255,42 @@ On its lowest basis HTTP is implemented under the CRUD-Principles of accessing r
 Let's take our simple `/resource_manager` for example, which lists things I own in various categories. When we try to read its contents, we query it with a `GET` method:
 
 
-    http -v --session resource_test http://http-fun.hackership.org/resource_manager
+```console
+http -v --session resource_test http://http-fun.hackership.org/resource_manager
+```
 
 
 I can also query one item specifically:
 
-    http -v --session resource_test http://http-fun.hackership.org/resource_manager/cake
+```console
+http -v --session resource_test http://http-fun.hackership.org/resource_manager/cake
+```
 
 Now, I can add new items, by posting to the resource manager and add a new items using the 'POST' method
 
-    http -v --form --session resource_test http://http-fun.hackership.org/resource_manager dog=jake
+```console
+http -v --form --session resource_test http://http-fun.hackership.org/resource_manager dog=jake
+```
 
 As you can see, when we add parameters after a space in the commandline, httpie understands that we want to send a body and automatically switches to the "POST"-method. By setting the `--form`-flag, we tell it to the use "key=value"-form notation. Other notations is `--json` (but our resource manager doesn't understand that).
 
 Now, if we look at the output, we can see, that we created a new resource. We can also overwrite the resource by sending a `PUT` to the newly created resource:
 
-    echo 'jake' | http -v --session resource_test PUT http://http-fun.hackership.org/resource_manager/dog
+```console
+echo 'jake' | http -v --session resource_test PUT http://http-fun.hackership.org/resource_manager/dog
+```
 
 Or delete the resource:
 
-    http -v --session resource_test DELETE http://http-fun.hackership.org/resource_manager/dog
+```console
+http -v --session resource_test DELETE http://http-fun.hackership.org/resource_manager/dog
+```
 
 It is also common practice that a PUT on the outer object resets the entire resource. Our server has that implementation, too:
 
-    http -v --session resource_test PUT http://http-fun.hackership.org/resource_manager/ dog=jake bag=tote
+```console
+http -v --session resource_test PUT http://http-fun.hackership.org/resource_manager/ dog=jake bag=tote
+```
 
 These are the basic ways to interact with http-resources. And although it is rather simple (four main methods), it is an incredibly powerful system and the basis of most [Restful APIs](#restful-api-design)
 
@@ -267,14 +303,18 @@ We have two more verbs to briefly look into: `HEAD` and `OPTIONS`.
 
 Want to see an example?
 
-    http -v --session resource_test OPTIONS http://http-fun.hackership.org/resource_manager/
+```console
+http -v --session resource_test OPTIONS http://http-fun.hackership.org/resource_manager/
+```
 
 
 **HEAD** on the other hand, executes a `GET`-Request on the resource but instead of returning the entire content, only returns the headers.
 
 Want to see an example?
 
-    http -v --session resource_test HEAD http://http-fun.hackership.org/resource_manager/
+```console
+http -v --session resource_test HEAD http://http-fun.hackership.org/resource_manager/
+```
 
 
 ### HTTP Status Codes
@@ -311,7 +351,9 @@ If you are interested to read a full list, including vendor specific additions, 
 
 For, we just want to redirect our browser to the awesome website on our server, to watch some lolcats:
 
-    http://http-fun.hackership.org/status/200
+```console
+http://http-fun.hackership.org/status/200
+```
 
 Where does it redirect us to?
 
@@ -326,7 +368,9 @@ Here we want to focus on these error codes, learn there differences and see how 
 
 If we try to access `/redirect/simple` on our server with http:
 
-    http --verbose http://localhost:8080/redirect/simple
+```console
+http -v http://http-fun.hackership.org/redirect/simple
+```
 
 We'll see the most simple version of a redirect:
 
@@ -341,19 +385,21 @@ By the way, if you were to switch on the `--follow` flag when running http, you'
 Which leads to a problematic potential, as we will see next, when we try to connect to `/redirect/bounce` with the `--follow` flag:
 
 
-    http --follow --verbose http://localhost:8080/redirect/bounce
+```console
+http --follow --verbose http://http-fun.hackership.org/redirect/bounce
+```
 
 It'll come back with a `TooManyRedirects: Exceeded 30 redirects.` .
 
 What just happened? Removing the follow flag, we see that `/redirect/bounce` takes us to `/redirect/back`:
 
-```
+```HTTP
 Location: http://http-fun.hackership.org/redirect/back
 ```
 
 Doing the same on `/redirect/back`, we see it points us to 
 
-```
+```HTTP
 Location: http://http-fun.hackership.org/redirect/bounce
 ```
 
@@ -373,11 +419,15 @@ For the server, this is just a question of difference in status codes. But it is
 
 See this simple permanent move:
 
-    http --verbose http://localhost:8080/redirect/permanent
+```console
+http -v http://http-fun.hackership.org/redirect/permanent
+```
 
 Now, let's assume we were to move an entire folder and all siblings but want old URLs to still react and tell them we have moved to a different server. For this, our server matches the URL and redirect the entire path. Try fetching:
 
-    http --verbose http://localhost:8080/redirect/old/
+```console
+http -v http://http-fun.hackership.org/redirect/old/
+```
 
 **Excercise**: Where did our path `/redirect/old/about` go? Try to argu first what you expect to happen, then make a request and see if you were right?
 
@@ -397,15 +447,19 @@ In this system the client adds the `Authorization`-header to the request and ser
 So let's play with it first. At `/auth/basic` we have a resource, you can only access if you provide user-name and password, otherwise we will receive a 401. If we send a normal request, we are blocked from seeing the content:
 
 
-    http --verbose http://http-fun.hackership.org/auth/basic
+```console
+http -v http://http-fun.hackership.org/auth/basic
+```
 
 We can instruct `httpie` to add username and password as follows:
 
-    http --verbose http://username:password@http-fun.hackership.org/auth/basic
+```console
+http -v http://username:password@http-fun.hackership.org/auth/basic
+```
 
 In this request, you can find the "Authorization"-Header:
 
-```
+```HTTP
 Authorization: Basic YmVuOnRlc3Q=
 ```
 
@@ -413,16 +467,18 @@ Although this looks cryptic, basic authentication really is just "username:passw
 
 This is why the HTTP protocol contains a second authentication mechanism by default, called "digest". Let's try to get going with this one on the `/auth/digest` URL. Accessing this one with our 'basic auth', yields a very interesting result. Among others we find a
 
-```
+```HTTP
 WWW-Authenticate: Digest nonce="cfc82b49f2bd8201", realm="Example Auth", qop="auth"
 ```
 
 header. This tells us, that the server requires a digest-authentication. We won't get far with our bad basic-plain-text here. Let's switch on digest auth on httpie:
 
 
-    http --verbose --auth-type digest http://user:password@localhost:8080/auth/digest
+```console
+http -v --auth-type digest http://user:password@localhost:8080/auth/digest
+```
 
-You'll see in the header that we send out a much more complex "Authorize" string with many parameters and values. And although this overall looks much more complex, it isn't that much more secure. Not only does it use the broken MD5 and SHA algorightms, in order to make it more secure every request is signed individually (as you can see in the parameters) increasing the calculation overhead a lot.
+You'll see in the header that we send out a much more complex "Authorize" string with many parameters and values. And although this overall looks much more complex, it isn't that much more secure. Not only does it use the broken MD5 and SHA algorithms, in order to make it more secure every request is signed individually (as you can see in the parameters) increasing the calculation overhead a lot.
 
 If you want to learn more on how this is calculated, I recommend this really good Wikipedia article about [digest auth](https://en.wikipedia.org/wiki/Digest_access_authentication).
 
@@ -441,11 +497,13 @@ Let's start by looking at the most commonly used version: the client sending the
 
 Please send a normal request to the endpoint `/content/simple`:
 
-    http --verbose http://localhost:8080/content/simple
+```console
+http -v http://http-fun.hackership.org/content/simple
+```
 
 You should see a text-formatted response as follows:
 
-```
+```HTTP
 HTTP/1.0 200 OK
 Content-Length: 23
 Content-Type: text/html; charset=utf-8
@@ -460,11 +518,13 @@ In the content header you can see the result of the "negotiation", the `Content-
 
 This server chose this as the preferred response, beause the client – you – send an i-accept-anything-`*/*`-`Accept` header. We can also overwrite any header `httpie` sends by adding it to the end of the request. For example, let's tell the server we only accept 'application/json' format:
 
-    http --verbose http://localhost:8080/content/simple Accept:'application/json'
+```console
+http -v http://http-fun.hackership.org/content/simple Accept:'application/json'
+```
 
 Voila
 
-```
+```HTTP
 HTTP/1.0 200 OK
 Content-Length: 34
 Content-Type: application/json
@@ -481,21 +541,25 @@ The server responded with the same data, but formatted in `JSON` as we requested
 
 We can also give multiple formats, the client supports and let the server decide which one to pick. We do that by giving multiple values delimited with a comma (`,`) as follows:
 
-    http --verbose http://localhost:8080/content/simple Accept:'text/plain, application/json'
+```console
+http -v http://http-fun.hackership.org/content/simple Accept:'text/plain, application/json'
+```
 
-Excercise: Can you argue, which format the server response will be? What if you change the order of the entries? Try it.
+**Exercise**: Can you argue, which format the server response will be? What if you change the order of the entries? Try it.
 
 #### Quality for choosing
 
 Right now, if the server finds multiple formats applicable it will just pick the first in line. Althought that might be fine for the client, the client might actually prefer some formats over others. In order to let the server know about that, we can give each mimetype a quality-value `;q=` to order them by. The default quality is `1.0`. So if we wanted to discourage the usage of `text/plan` from our previous example, no matter the order, we could request:
 
-    http --verbose http://localhost:8080/content/simple Accept:'text/plain; q=0.9, application/json'
+```console
+http -v http://http-fun.hackership.org/content/simple Accept:'text/plain; q=0.9, application/json'
+```
 
 Nice, eh?
 
 #### Agent and transparent Negotiation
 
-Are very uncommon in practice. Primarely because they are very cumbersome and scale rather bad. As the client doesn't know the formats they can ask for when they receive an `300 Multiple Choices`, the have to potentially ask for a lot before it eventually fails. More commonly you'll find `406 Not Accatable` as it might be used in conjunction with your client asking an API to deliver in a format (like `xml`) that is not, or no longer, supported. In which case you probably want to upgrade your code ;) .
+Are very uncommon in practice. Primarily because they are very cumbersome and scale rather bad. As the client doesn't know the formats they can ask for when they receive an `300 Multiple Choices`, the have to potentially ask for a lot before it eventually fails. More commonly you'll find `406 Not Acceptable` as it might be used in conjunction with your client asking an API to deliver in a format (like `xml`) that is not, or no longer, supported. In which case you probably want to upgrade your code ;) .
 
 You can learn more about content negotiation and how browsers handle it on this great [Mozilla Developer Network site](https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation).
 
@@ -509,12 +573,14 @@ Note: In Web-Development the compression is typically handeled by a load-balanci
 
 Let's redirect our attention to a resource that has gzip-encoding enabled: `/content/compressed`. Aside from sending the body gzip-encoded, it behaves exactly the same as `/content/simple` did before. So you can compare requests to both and the results, you'll get back. Now run:
 
-    http --verbose http://localhost:8080/content/compressed
+```console
+http -v http://http-fun.hackership.org/content/compressed
+```
 
 **Note**: If `httpie` finds the appropriate `Content-Encoding`-Header send by the server, it will automatically decode the content before showing. So, you can only see the difference by looking at the headers send back.
 
 
-**Excersise**: Do you notice any difference to the same call to `/content/simple`? Does `httpie` send any `Accept-Encoding`-Header? If so, what is it set to? What happens if we overwrite the header by adding a specific `Accept-Encoding:'deflate'` to the httpie command?
+**Exercise**: Do you notice any difference to the same call to `/content/simple`? Does `httpie` send any `Accept-Encoding`-Header? If so, what is it set to? What happens if we overwrite the header by adding a specific `Accept-Encoding:'deflate'` to the httpie command?
 
 
 You might have noticed that the content size with gzip is larger than the content of the raw text. This is a caused by gzip adding overhead to the content. This, in addition to the extra performance impact this has, is why in production content that is smaller than 500bytes usually is not compressed by the server even if the client supports it.
@@ -536,7 +602,9 @@ Fortunately, this practice has declined recently. With the emergence of use case
 
 Go ahead, try it out – this is a fake user agent, which should be detected as mobile:
 
-    http http://localhost:8080/useragent User-Agent:' Mobile/5G77 Safari/525.20'
+```console
+http http://http-fun.hackership.org/useragent User-Agent:' Mobile/5G77 Safari/525.20'
+```
 
 Go, try it out with a few more User Agent string:
 
@@ -570,19 +638,21 @@ We've discussed one optimisation in the HTTP Protocol before, the compression of
 
 In order to help with this common problem and improve performance HTTP has certain caching features, which can be enable – you guessed it – through the usage of specific headers. Although the responsibility for an implementation is totally on the side of the client, it is the server, who controls what and for how long to cache it. Throughout all the headers we will look at next, this is the underlying mechanic.
 
-But caching can also be handled by an intermediate instance. In todays world with CDNs (Content Delivery Networks) that is even more common. So, if you are serving your content through any of these systems (like cloudflare), you should take extra care about the caching they do on your behalf based on the http headers you serve.
+But caching can also be handled by an intermediate instance. In nowadays world with CDNs (Content Delivery Networks) that is even more common. So, if you are serving your content through any of these systems (like cloudflare), you should take extra care about the caching they do on your behalf based on the http headers you serve.
 
 #### Cache-Control
 
 The main entry point to look at caching is the `Cache-Control`-header. Unlike some other fields we come to later, these **must be passed through as well as be obeyed by intermediates**. Which makes it a highly important field for controlling intermediate caches and how they act.
 
-Cache control has various extensions, and the specifciation even allows for third party vendor extensions, which are separated by a comma. If the client doesn't understand an extension, it should simply ignore it, as long as it implements the ones in the standard. Let's take a look at a simple example:
+Cache control has various extensions, and the specification even allows for third party vendor extensions, which are separated by a comma. If the client doesn't understand an extension, it should simply ignore it, as long as it implements the ones in the standard. Let's take a look at a simple example:
 
-    http --verbose http://localhost:8080/cache/simple
+```console
+http -v http://http-fun.hackership.org/cache/simple
+```
 
 In our output we find the `Cache-Control`-header:
 
-```
+```HTTP
 HTTP/1.0 200 OK
 Cache-Control: public, max-age=20
 Content-Length: 24
@@ -615,7 +685,9 @@ Usage of this header field reduced the amount of hits on your server BY A LOT an
 
 But first let's look at an example:
 
-    http http://localhost:8080/cache/expire
+```console
+http http://http-fun.hackership.org/cache/expire
+```
 
 As you can see it serves you both the Cache-Control and the Expires headers. Both dating to 364 days into the future from when the server was started. We are using both as Cache-Control isn't understood by all HTTP/1.0 clients and caches. So as a best practice always set both.
 
@@ -629,13 +701,17 @@ Unlike expires, which allows the client to cache the content, the entity tag (sh
 
 Here is a simple example on how this works. Let's take the following resource at `/cache/etag`:
 
-    http --verbose http://localhost:8080/cache/etag
+```console
+http -v http://http-fun.hackership.org/cache/etag
+```
 
 It comes back with a `Cache-Control` header allowing anyone to cache, but more interesting for us, it delivers us an `Etag` for the content. Now when we want to access the entity again later, our cache tells us we need to revalidate it and we can do so by supplying that etag using the `If-None-Match`-header:
 
-    http --verbose http://localhost:8080/cache/etag If-None-Match:'1234567-etd'
-
+```console
+http -v http://http-fun.hackership.org/cache/etag If-None-Match:'1234567-etd'
 ```
+
+```HTTP
 HTTP/1.0 304 NOT MODIFIED
 Connection: close
 Date: Sat, 18 Apr 2015 01:34:16 GMT
@@ -647,7 +723,9 @@ And voila, instead of the entire response, the server informed us that the resou
 
 We can also ask with a stale etag, in which case we receive a full response again – including an updated etag:
 
-    http --verbose http://localhost:8080/cache/etag If-None-Match:'1234567'
+```console
+http -v http://http-fun.hackership.org/cache/etag If-None-Match:'1234567'
+```
 
 
 #### Vary-Header
@@ -672,17 +750,21 @@ Let's image a very simple chat API with the endpoint `/chat/messages`. If we sen
 
 Now image you are the website, and you poll the `/chat/messages/` endpoint once a second by doing:
 
-    http --verbose http://localhost:8080/chat/messages
+```console
+http -v http://http-fun.hackership.org/chat/messages
+```
 
 Do that once a second (rougly), while on the other shell now post a message to it. On the website that could happen through a form for example:
 
-    http --verbose --form http://localhost:8080/chat/messages message="Hello"
+```console
+http -v --form http://http-fun.hackership.org/chat/messages message="Hello"
+```
 
 *Note*: this server implementation is rather dumb, if many people do that at the same time, you might don't even see your message pop up ;) .
 
 Alright. We now have a rough but simple enough working chat emulator. We can read messages (by polling once a second) and we can post messages. What else do we need? A UI? Why? Aren't you capable of using the Terminal? You think it's not pretty? PFFFFFFF... well ok.
 
-Redirect your browser to `http://localhost:8080/chat/` then...
+Redirect your browser to `http://http-fun.hackership.org/chat/` then...
 
 TADA! The exact same functionality. And if you open your Developer Tools, you'll find that it does exactly what we have just been doing. Here a tiny part of the code:
 
@@ -737,17 +819,24 @@ But in this case, we actually want to allow the client to read that content. The
 
 Take a look at this resource:
 
-    http --verbose http://http-fun.hackership.org/chat/allowed-messages Origin:'http://www.hackership.org'
+```console
+http -v http://http-fun.hackership.org/chat/allowed-messages Origin:'http://www.hackership.org'
+```
 
 You can see, that one has the `Access-Control-Allow-Origin` header set to allow "http://www.hackership.org". But you will also see, that trying to "POST" to it is denied by the server:
 
-    http --verbose POST http://http-fun.hackership.org/chat/allowed-messages Origin:'http://www.hackership.org'
+```console
+http -v POST http://http-fun.hackership.org/chat/allowed-messages Origin:'http://www.hackership.org'
+```
 
 This way, the server can allow third-party sites to load the content but disallow the imposting of others. Another way to enforce this behaviour by also setting the `Access-Control-Allow-Method` header.
 
 In order to not rely on the browser implementing and enforcing the security rule, many APIs which generally allow CORS will only do so, when the request contains a specific `Origin`-Header (which is automatically supplied when doing AJAX requests). If you remove the `Origin`-header in our `httpie`-request, you will see that the server denies access:
 
-    http --verbose http://http-fun.hackership.org/chat/allowed-messages
+```console
+http -v http://http-fun.hackership.org/chat/allowed-messages
+```
+
 
 Let's get back to the browser and try again with the `/chat/allowed` url...:
 
@@ -796,13 +885,17 @@ Allowing access across origin is called "Cross Origin Resource Sharing", or CORS
 
 For some of the tests to work properly, you need to host the server yourself. You will need a proper virtualenv (on python 2.7) on your system, then you can get going with this:
 
-    virtualenv .
-    ./bin/pip install -r requirements
-    ./bin/python server.py
+```console
+virtualenv .
+./bin/pip install -r requirements
+./bin/python server.py
+```
 
 And you can run the tests against your local instance on port 8080:
 
-    ./bin/http -v http://localhost:8080/
+```console
+./bin/http -v http://localhost:8080/
+```
 
 ### Opening the Developer Console
 
