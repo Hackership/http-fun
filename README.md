@@ -711,8 +711,52 @@ Sending data to the server, receiving data from it without reloading the page, a
 
 ### Cross Origin Request Security (CORS)
 
- - try to load content from hackership.org using $-ajax against multiple endpoints
+**Note**: As this is a very specific topic within AJAX, I assume you are familiar with at least that (otherwise read up in the chapter before). I also believe you've encountered that primarily through the usage of jQuery or a similar web-frontend library. So I assume you are familiar with the basics of Javascript and jQuery to illustrate this chapter.
 
+In the example before, we were loading chat messages from  `http-fun.hackership.org/chat/messages`. Let's assume, we want to do that from the Javascript of a different server. For the simplicity of this case, just head over to [www.hackership.org](http://www.hackership.org) and [open the developer console](#opening-the-developer-console) there.
+
+Now, in the console type in the following and press enter:
+
+```Javascript
+$.get("http://http-fun.hackership.org/chat/messages").then(function(r) {alert(r.data);});
+```
+
+From the code you'd expect an alert message with the content of the response. But instead what you'll see is this ugly error message:
+
+![CORS](images/cors-error.png?raw=true)
+
+#### Some Background
+
+In the early times of the web, when Javascript was still a new thing, people abused it to send faulty data and try to impersonate other people online. Remember the Cookie-Request thing from before? If they are send _at every request_ if you were to make – let's say – a request that would post something on the facebook wall with the javascript from within the browser from a different website, you can impersonate them and their account. Posting content in their name is still the more harmless thing you could do.
+
+In order to prevent that, Javascript is generally sandboxed into its own domain. A script that comes from `www.hackership.org` is not allowed to access content from `http-fun.hackership.org` as that is a different server. That is called 'the origin' and trying to make a request across origins is disallowed by the browser. Hence the "Cross-Origin Request Blocked" error message. This behaviour is generally implemented in all browser, which have a decent cookie and Javascript support enabled. And it is a sane and good default.
+
+### Back to the issue
+
+But in this case, we actually want to allow the client to read that content. There have been various ways to hack around this in the past, until eventually HTTP introduced the `Access-Control-Allow-Origin`-header. Through this header the server can specify other domains, which are allowed to access this content.
+
+Take a look at this resource:
+
+    http --verbose http://http-fun.hackership.org/chat/allowed-messages Origin:'http://www.hackership.org'
+
+You can see, that one has the `Access-Control-Allow-Origin` header set to allow "http://www.hackership.org". But you will also see, that trying to "POST" to it is denied by the server:
+
+    http --verbose POST http://http-fun.hackership.org/chat/allowed-messages Origin:'http://www.hackership.org'
+
+This way, the server can allow third-party sites to load the content but disallow the imposting of others. Another way to enforce this behaviour by also setting the `Access-Control-Allow-Method` header.
+
+In order to not rely on the browser implementing and enforcing the security rule, many APIs which generally allow CORS will only do so, when the request contains a specific `Origin`-Header (which is automatically supplied when doing AJAX requests). If you remove the `Origin`-header in our `httpie`-request, you will see that the server denies access:
+
+    http --verbose http://http-fun.hackership.org/chat/allowed-messages
+
+Let's get back to the browser and try again with the `/chat/allowed` url...:
+
+
+```Javascript
+$.get("http://http-fun.hackership.org/chat/allowed-messages").then(function(r) {alert(r.data);});
+```
+
+Allowing access across origin is called "Cross Origin Resource Sharing", or CORS for short. As so often, this is just a brief overview of the key principle and the main parameters and there are plenty more to discover. I recommend [the MDN article](https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS) and the [CORS-specification](http://www.w3.org/TR/access-control/) for further reading.
 
 ### Cross-Site-Scripting
 
@@ -760,7 +804,18 @@ And you can run the tests against your local instance on port 8080:
 
     ./bin/http -v http://localhost:8080/
 
-###
+### Opening the Developer Console
+
+In Firefox navigate to `Tools->Web Developer->Web Console` and click it.
+
+![Webconsole](images/webconsole.png?raw=true)
+
+Unless you configured it differently before a big panel should pop up from the bottom like this:
+
+![console-open](images/console-open.png?raw=true)
+
+This panel is the "developer console". Head back to the chapter you were looking at :D .
+
 
 ## License
 

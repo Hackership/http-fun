@@ -339,8 +339,18 @@ $(function(){
 </script>
 </body>
 </html>
-
 """
+
+# CORS enabled messages
+
+@app.route('/chat/allowed-messages', methods=["GET"])
+def chat_messages_cors():
+    if not request.headers.get("Origin", False) == "http://www.hackership.org":
+        abort(401)
+    response = make_response(chat_messages_get())
+    response.headers['Access-Control-Allow-Origin'] = "http://www.hackership.org"
+    return response
+
 
 if __name__ == "__main__":
     config = dict(port=8080, debug=True)
