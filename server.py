@@ -1,9 +1,15 @@
-from flask import Flask, request, make_response, session, abort, redirect
+from gevent.wsgi import WSGIServer
+from flask import Flask, request, make_response, session, abort, redirect, Response
 app = Flask(__name__)
 
 from datetime import datetime, timedelta
+
+from gevent import monkey
+monkey.patch_time()
+
 import json
 import os
+import time
 
 
 ASCII_HELLO = """
@@ -358,4 +364,7 @@ if __name__ == "__main__":
     if os.getenv('production'):
         config = dict(host="0.0.0.0", port=5000)
 
-    app.run(**config)
+    # app.run(**config)
+    http_server = WSGIServer(('', 5000), app)
+    http_server.serve_forever()
+
