@@ -1,7 +1,7 @@
 from flask import Flask, request, make_response, session, abort, redirect
 app = Flask(__name__)
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import os
 
@@ -263,7 +263,84 @@ def useragent():
     return "Normal website"
 
 
+# Cache behaviour
+@app.route("/cache/simple")
+def cache_simple():
+    resp = make_response("Simple Cache-able Response")
+    resp.headers["Cache-Control"] = "public, max-age=20"
+    return resp
 
+STARTTIME = datetime.now()
+EXPIRES = STARTTIME + timedelta(days=364)
+
+
+@app.route("/cache/expire")
+def cache_expire():
+    resp = make_response("Simple expering Response")
+    resp.headers["Cache-Control"] = "public, max-age={}".format( (EXPIRES - datetime.now()).seconds )
+    resp.headers["Expires"] = EXPIRES.strftime("%a, %d-%b-%Y %H:%M:%S GMT")
+    return resp
+
+
+@app.route('/cache/etag')
+def cache_etag():
+    if request.headers.get("If-None-Match") == '1234567-etd':
+        return make_response("", 304)
+    resp = make_response("Simple tagged Response")
+    resp.headers["Cache-Control"] = "public"
+    resp.headers["Etag"] = "1234567-etd"
+    return resp
+
+CHAT = []
+
+@app.route('/chat/messages', methods=["GET"])
+def chat_messages_get():
+    global CHAT
+    return "- " + "<br>\n- ".join(CHAT[-10:])
+
+
+@app.route('/chat/messages', methods=["POST"])
+def chat_messages_post():
+    global CHAT
+    if not request.form.get("message"):
+        abort(400, "Please provide a message")
+    CHAT.append(request.form.get("message"))
+    if len(CHAT) > 10:
+        CHAT[:] = CHAT[-10:]
+    return ""
+
+@app.route('/chat')
+def chat():
+    return """<html><head><title>Minimal ajax example</title><head>
+<body>
+<div id="messages">Loading ...</div>
+<div>
+<form id="form"><input type="text" id="input"/>
+     <button type="submit">Send</button>
+</form>
+</div>
+<script src="http://code.jquery.com/jquery-2.1.3.min.js"></script>
+<script type="text/javascript">
+$(function(){
+    $("#form").submit(function(evt){
+        evt.preventDefault();
+        var content = $("#input").val().trim();
+        if (content.length){
+            $.post("/chat/messages", {message: content});
+        }
+
+        $("#input").val("");
+    });
+
+    setInterval(function(){
+        $("#messages").load("/chat/messages");
+    }, 1000);
+});
+</script>
+</body>
+</html>
+
+"""
 
 if __name__ == "__main__":
     config = dict(port=8080, debug=True)

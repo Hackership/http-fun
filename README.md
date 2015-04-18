@@ -566,34 +566,184 @@ With the same detection any server can serve different content to mobile or craw
 
 ### Caching
 
- - explain the http-caching headers
- - return 304 if applicable
+We've discussed one optimisation in the HTTP Protocol before, the compression of content. As HTTP is a request-response-protocol it means there are only so many things we can request at the same time and we have to often wait for them to get back. Even if they are compressed, if the content didn't change since the last time we fetched, we still send the entire content over the wire and have to figure that it is the same. Or, do we?
 
-### AJAX
+In order to help with this common problem and improve performance HTTP has certain caching features, which can be enable – you guessed it – through the usage of specific headers. Although the responsibility for an implementation is totally on the side of the client, it is the server, who controls what and for how long to cache it. Throughout all the headers we will look at next, this is the underlying mechanic.
 
-### Cross Origin Request (CORS)
+But caching can also be handled by an intermediate instance. In todays world with CDNs (Content Delivery Networks) that is even more common. So, if you are serving your content through any of these systems (like cloudflare), you should take extra care about the caching they do on your behalf based on the http headers you serve.
 
-### Cross-Site-Scripting (CSRF-Tokens)
+#### Cache-Control
+
+The main entry point to look at caching is the `Cache-Control`-header. Unlike some other fields we come to later, these **must be passed through as well as be obeyed by intermediates**. Which makes it a highly important field for controlling intermediate caches and how they act.
+
+Cache control has various extensions, and the specifciation even allows for third party vendor extensions, which are separated by a comma. If the client doesn't understand an extension, it should simply ignore it, as long as it implements the ones in the standard. Let's take a look at a simple example:
+
+    http --verbose http://localhost:8080/cache/simple
+
+In our output we find the `Cache-Control`-header:
+
+```
+HTTP/1.0 200 OK
+Cache-Control: public, max-age=20
+Content-Length: 24
+Content-Type: text/html; charset=utf-8
+Date: Sat, 18 Apr 2015 00:54:19 GMT
+Server: Werkzeug/0.10.4 Python/2.7.5
+
+Simple Cache-able Response
+```
+
+
+In this case the server informs us, the caching features `public` and `max-age` (set to 20) are activated. These two in combination are the most common example. So, let's take a look at the various extensions for Cache-Control and what they do:
+
+- `public` | `private`: to be stated first, are mutually exclusive. Where `public` means, anyone is allowed to cache, and `private` that only the end-user is allowed (as it is their content).
+- `no-cache` :  as you guessed means no instance should cache this ever. However, if you specified a field after no cache, like `no-cache=Cookies`, the response may be cached after this header field has been stripped. This can be very useful, but you shouldn't rely on it solely as some don't actually implement that behaviour.
+- `max-age` defines a maximum amount of time, in seconds, the cache is allowed to hold the content without any revalidation. Meaning that unless the time elapsed the client doesn't even ask the server before serving stale content. This already makes requests significantly faster.
+- `s-maxage` acts the same as `max-age` but is only used for "shared-caches" (hence the prefixed `s-`). Meaning this is only for the CDN/Proxy but end-client will ignore it.
+- `must-revalidate` means that the client has to check back with the server before serving a stale instance. This is typically used in conjunction with the later explained 'Etag'-field.
+- `no-transform` some proxies do transformation on behalf of the end-users, for example convert images into lower resolutions or concatenate Javascript-files for mobile usage. You can enforce them to not do anything by using this flag.
+
+As these are just fields the server can send, most of which are for intermediates and we – as the client implementation – don't really have much caching enabled, there is little do with these at the moment. Aside from knowing about them.
+
+What is more interesting is the two different approaches caching can work in general. Expiry vs. etag.
+
+#### Expires
+
+So, the expires header essentially states until when (as in timestamp) the client (or any intermediate) is allowed to keep a stale version around without _asking the server again_.
+
+Usage of this header field reduced the amount of hits on your server BY A LOT and will improve load time tremendously. But it comes with a few things to keep in mind.
+
+But first let's look at an example:
+
+    http http://localhost:8080/cache/expire
+
+As you can see it serves you both the Cache-Control and the Expires headers. Both dating to 364 days into the future from when the server was started. We are using both as Cache-Control isn't understood by all HTTP/1.0 clients and caches. So as a best practice always set both.
+
+But here you can already see one caveat of this approach. Even if we were to update the server now and set different content and a different expiry time, a client who received this response before **will not know about this** as they will be caching the stale version until it is invalidated.
+
+Setting expire, especially for long into the future, therefore must be used with a lot of caution. To not cause troubles later. As a general rule of thumb, only use it for content that is changing almost never and/or set the value to small amounts. Or use Etags
+
+#### Etag
+
+Unlike expires, which allows the client to cache the content, the entity tag (short `etag`) requires revalidation of the content but can be used to omit the content if it doesn't differ.
+
+Here is a simple example on how this works. Let's take the following resource at `/cache/etag`:
+
+    http --verbose http://localhost:8080/cache/etag
+
+It comes back with a `Cache-Control` header allowing anyone to cache, but more interesting for us, it delivers us an `Etag` for the content. Now when we want to access the entity again later, our cache tells us we need to revalidate it and we can do so by supplying that etag using the `If-None-Match`-header:
+
+    http --verbose http://localhost:8080/cache/etag If-None-Match:'1234567-etd'
+
+```
+HTTP/1.0 304 NOT MODIFIED
+Connection: close
+Date: Sat, 18 Apr 2015 01:34:16 GMT
+Server: Werkzeug/0.10.4 Python/2.7.5
+
+```
+
+And voila, instead of the entire response, the server informed us that the resource was `304 Not Modified`. Which means we can just load the content from our cache and be happy with it. Thus increasing download time significantly.
+
+We can also ask with a stale etag, in which case we receive a full response again – including an updated etag:
+
+    http --verbose http://localhost:8080/cache/etag If-None-Match:'1234567'
+
+
+#### Vary-Header
+
+One header, I'd like to add to this chapter about Caching is the `vary`-header. This really cool field signals a client that although they might not be allowed to cache the result as is, they might be if they supply a different value to the field specified here. One classic example for that is, telling the Google Bot through `Vary: User-Agent`, that there is a different version for them than for others. Thus triggering the Google Bot to try to connect to your page and cache a mobile version of your website, too.
+
+
+#### There's much more
+
+There are plenty more things you can set, but these are the most common ones to know about. There is a good article explaining many of these more in depth on [the mobify blog](https://www.mobify.com/blog/beginners-guide-to-http-cache-headers/) and the [specification is actually quite readable](www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9), too.If you want to learn more about any of these fields.
+
+
+### AJAX Request
+
+AJAX stands for Asynchronous JavaScript and XML and describes a group of web development techniques used in client side web-application. A client-side web application uses Javascript to execute code in the browser outside of the context of the server. This allows for more fluid updates and a generally a better and more instant response as not every action first requires to be confirmed from the web server.
+
+One very important aspect of these websites is to allow content-changes without refreshing the entire website. A good example for that is a chat app. You don't want to refresh the entire site, just because one message has been added.
+
+In this case we will first emulate the Javascript client using our lovely `httpie` tool before moving over and introspect a working javascript-based implementation. For the later you need some basic understanding of HTML and be able to briefly parse Javascript (although we'll explain the major part of it).
+
+Let's image a very simple chat API with the endpoint `/chat/messages`. If we send a post-message to that endpoint a new message is created and stored, when we send a get, we receive the latest 10 messages.
+
+Now image you are the website, and you poll the `/chat/messages/` endpoint once a second by doing:
+
+    http --verbose http://localhost:8080/chat/messages
+
+Do that once a second (rougly), while on the other shell now post a message to it. On the website that could happen through a form for example:
+
+    http --verbose --form http://localhost:8080/chat/messages message="Hello"
+
+*Note*: this server implementation is rather dumb, if many people do that at the same time, you might don't even see your message pop up ;) .
+
+Alright. We now have a rough but simple enough working chat emulator. We can read messages (by polling once a second) and we can post messages. What else do we need? A UI? Why? Aren't you capable of using the Terminal? You think it's not pretty? PFFFFFFF... well ok.
+
+Redirect your browser to `http://localhost:8080/chat/` then...
+
+TADA! The exact same functionality. And if you open your Developer Tools, you'll find that it does exactly what we have just been doing. Here a tiny part of the code:
+
+```javascript
+$("#form").submit(function(evt){
+    evt.preventDefault();
+    var content = $("#input").val().trim();
+    if (content.length){
+        $.post("/chat/messages", {message: content});
+    }
+
+    $("#input").val("");
+});
+
+setInterval(function(){
+    $("#messages").load("/chat/messages");
+}, 1000);
+```
+
+Even without super awesome Javascript Skill you will probably be able to understand the basics: In line 1 we connect to the `form` encapsulating the input-item and the button and whenever that is `submit`ed, our code is triggered. We then read the content of the input field (line 3) and if some is given (line 4) we trigger the same post request as we just did from the command line before (line 5). In either case we clear the input-field after (line 8).
+
+The second function (line 12ff) does the second part of what we did before: once a second (line 14) we reload the content of the html-element `#messages` with the content from the server.
+
+Sending data to the server, receiving data from it without reloading the page, all possible through using Javascript in teh browser. This is the basic principle of AJAX.
+
+
+### Cross Origin Request Security (CORS)
+
+ - try to load content from hackership.org using $-ajax against multiple endpoints
+
+
+### Cross-Site-Scripting
+
+### Cross Site Request Forgery (& Token)
+
 
 ### Restful (API) Design
 
+
+
+
 ### HTTP Streaming
 
-### Keep-Alive
 
-### Long-Polling/Comet
-
-### Websockets
+### Keep-Alive and Pipelining
 
 
-## Honourable mentions
+
+## Coming up next/ ToDo
 
 ### Reverse Proxies
 
 ### Do Not Track
 
-### HTTPS (Certificate nightmare)
+### HTTPS
 
+### Long-Polling/Comet/Streaming
+
+### Websockets
+
+### HTTP/2.0
 
 
 ## Appendix
