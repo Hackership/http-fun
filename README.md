@@ -102,7 +102,7 @@ This is the basic principle of how headers work. When you send them to the serve
 
 Typing this up every time is kinda dreadful and mostly an exercise for you to understand what goes on under the hood. In order to make the typing a little easier, we will use the awesome [httpie](https://pypi.python.org/pypi/httpie/0.9.2) command line http-debugger from here on up.
 
-Let's do a simple request with it again, type `http -v http://http-fun.hackership.org/`:
+Let's do a simple request with it again, type `http --verbose http://http-fun.hackership.org/`:
 
 ![](images/httpie-hello.png?raw=true)
 
@@ -113,7 +113,7 @@ Note: Per default `httpie` doesn't show our request (nor headers). Thus we are r
 Let's fake the User-Agent again. We can do that by adding our headers at the end of the command like this:
 
 ```console
-http -v http://http-fun.hackership.org/ User-Agent:Terminal
+http --verbose http://http-fun.hackership.org/ User-Agent:Terminal
 ```
 
 And we are back at seeing our terminal output again.
@@ -127,7 +127,7 @@ One very important feature of HTTP are "cookies". You have probably heard about 
 To enable cookies in `httpie`, we need to specify a session for it. We do that by giving it the `--session cookie_test` parameter. Let's see what happens, when we go to the `/cookie/set`-path of our server:
 
 ```console
-http -v --session cookie_test http://http-fun.hackership.org/cookie/set?name=test
+http --verbose --session cookie_test http://http-fun.hackership.org/cookie/set?name=test
 ```
 
 In your response, you'll find the header:
@@ -151,14 +151,14 @@ A very commonly use case for this is, to keep the login information of a user ar
 Here is a page, that you can only request, once you 'logged in' into the system, try accessing it with httpie:
 
 ```console
-http -v --session cookie_test http://http-fun.hackership.org/cookie/secret-room
+http --verbose --session cookie_test http://http-fun.hackership.org/cookie/secret-room
 ```
 
 As you can see, the server told us, we aren't authorized to access this page. Let's try to login:
 
 
 ```console
-http -v --session cookie_test http://http-fun.hackership.org/cookie/login?username=hackership&password=password
+http --verbose --session cookie_test http://http-fun.hackership.org/cookie/login?username=hackership&password=password
 ```
 
 The server accepted our request and told us we are authorized.
@@ -168,7 +168,7 @@ The server accepted our request and told us we are authorized.
 We can see in the headers, that it set the cookie "username" to "hackership". Well, let's try to connect to the secrect-room again and see what happens:
 
 ```console
-http -v --session cookie_test http://http-fun.hackership.org/cookie/secret-room
+http --verbose --session cookie_test http://http-fun.hackership.org/cookie/secret-room
 ```
 
 Holy cow, we are part of the club now! The server identifies us just by using the cookie. Don't want to believe me? Run the same command again but without the `--session cookie_test`.
@@ -178,7 +178,7 @@ Holy cow, we are part of the club now! The server identifies us just by using th
 This is all cool, but if you think about it, this also quite easy to hack. Just figure out the username, add it as the set-cookie header and you are imposing as someone else:
 
 ```console
-http -v http://http-fun.hackership.org/cookie/secret-room Cookie:username=imposter
+http --verbose http://http-fun.hackership.org/cookie/secret-room Cookie:username=imposter
 ```
 
 ![](images/imposter.png?raw=true)
@@ -197,19 +197,19 @@ We have a lightweight server without a database, so it uses the first method to 
 
 
 ```console
-http -v --session cookie_test http://http-fun.hackership.org/session/secret-room
+http --verbose --session cookie_test http://http-fun.hackership.org/session/secret-room
 ```
 
 Looks, like we have login first. Well, let's do that. This time against the `/session/login`-resource.
 
 ```console
-http -v --session cookie_test http://http-fun.hackership.org/cookie/login?username=hackership&password=password
+http --verbose --session cookie_test http://http-fun.hackership.org/cookie/login?username=hackership&password=password
 ```
 
 Can you spot the `Set-Cookie`-header in the response? Well, that looks like a bunch of garbage, doesn't it? But we know it is the value of 'session'. Let's see if we can connect now:
 
 ```console
-http -v --session cookie_test http://http-fun.hackership.org/session/secret-room
+http --verbose --session cookie_test http://http-fun.hackership.org/session/secret-room
 ```
 
 Looks like we can:
@@ -256,20 +256,20 @@ Let's take our simple `/resource_manager` for example, which lists things I own 
 
 
 ```console
-http -v --session resource_test http://http-fun.hackership.org/resource_manager
+http --verbose --session resource_test http://http-fun.hackership.org/resource_manager
 ```
 
 
 I can also query one item specifically:
 
 ```console
-http -v --session resource_test http://http-fun.hackership.org/resource_manager/cake
+http --verbose --session resource_test http://http-fun.hackership.org/resource_manager/cake
 ```
 
 Now, I can add new items, by posting to the resource manager and add a new items using the 'POST' method
 
 ```console
-http -v --form --session resource_test http://http-fun.hackership.org/resource_manager dog=jake
+http --verbose --form --session resource_test http://http-fun.hackership.org/resource_manager dog=jake
 ```
 
 As you can see, when we add parameters after a space in the commandline, httpie understands that we want to send a body and automatically switches to the "POST"-method. By setting the `--form`-flag, we tell it to the use "key=value"-form notation. Other notations is `--json` (but our resource manager doesn't understand that).
@@ -277,19 +277,19 @@ As you can see, when we add parameters after a space in the commandline, httpie 
 Now, if we look at the output, we can see, that we created a new resource. We can also overwrite the resource by sending a `PUT` to the newly created resource:
 
 ```console
-echo 'jake' | http -v --session resource_test PUT http://http-fun.hackership.org/resource_manager/dog
+echo 'jake' | http --verbose --session resource_test PUT http://http-fun.hackership.org/resource_manager/dog
 ```
 
 Or delete the resource:
 
 ```console
-http -v --session resource_test DELETE http://http-fun.hackership.org/resource_manager/dog
+http --verbose --session resource_test DELETE http://http-fun.hackership.org/resource_manager/dog
 ```
 
 It is also common practice that a PUT on the outer object resets the entire resource. Our server has that implementation, too:
 
 ```console
-http -v --session resource_test PUT http://http-fun.hackership.org/resource_manager/ dog=jake bag=tote
+http --verbose --session resource_test PUT http://http-fun.hackership.org/resource_manager/ dog=jake bag=tote
 ```
 
 These are the basic ways to interact with http-resources. And although it is rather simple (four main methods), it is an incredibly powerful system and the basis of most [Restful APIs](#restful-api-design)
@@ -304,7 +304,7 @@ We have two more verbs to briefly look into: `HEAD` and `OPTIONS`.
 Want to see an example?
 
 ```console
-http -v --session resource_test OPTIONS http://http-fun.hackership.org/resource_manager/
+http --verbose --session resource_test OPTIONS http://http-fun.hackership.org/resource_manager/
 ```
 
 
@@ -313,7 +313,7 @@ http -v --session resource_test OPTIONS http://http-fun.hackership.org/resource_
 Want to see an example?
 
 ```console
-http -v --session resource_test HEAD http://http-fun.hackership.org/resource_manager/
+http --verbose --session resource_test HEAD http://http-fun.hackership.org/resource_manager/
 ```
 
 
@@ -369,7 +369,7 @@ Here we want to focus on these error codes, learn there differences and see how 
 If we try to access `/redirect/simple` on our server with http:
 
 ```console
-http -v http://http-fun.hackership.org/redirect/simple
+http --verbose http://http-fun.hackership.org/redirect/simple
 ```
 
 We'll see the most simple version of a redirect:
@@ -420,13 +420,13 @@ For the server, this is just a question of difference in status codes. But it is
 See this simple permanent move:
 
 ```console
-http -v http://http-fun.hackership.org/redirect/permanent
+http --verbose http://http-fun.hackership.org/redirect/permanent
 ```
 
 Now, let's assume we were to move an entire folder and all siblings but want old URLs to still react and tell them we have moved to a different server. For this, our server matches the URL and redirect the entire path. Try fetching:
 
 ```console
-http -v http://http-fun.hackership.org/redirect/old/
+http --verbose http://http-fun.hackership.org/redirect/old/
 ```
 
 **Excercise**: Where did our path `/redirect/old/about` go? Try to argu first what you expect to happen, then make a request and see if you were right?
@@ -448,13 +448,13 @@ So let's play with it first. At `/auth/basic` we have a resource, you can only a
 
 
 ```console
-http -v http://http-fun.hackership.org/auth/basic
+http --verbose http://http-fun.hackership.org/auth/basic
 ```
 
 We can instruct `httpie` to add username and password as follows:
 
 ```console
-http -v http://username:password@http-fun.hackership.org/auth/basic
+http --verbose http://username:password@http-fun.hackership.org/auth/basic
 ```
 
 In this request, you can find the "Authorization"-Header:
@@ -475,7 +475,7 @@ header. This tells us, that the server requires a digest-authentication. We won'
 
 
 ```console
-http -v --auth-type digest http://user:password@localhost:8080/auth/digest
+http --verbose --auth-type digest http://user:password@localhost:8080/auth/digest
 ```
 
 You'll see in the header that we send out a much more complex "Authorize" string with many parameters and values. And although this overall looks much more complex, it isn't that much more secure. Not only does it use the broken MD5 and SHA algorithms, in order to make it more secure every request is signed individually (as you can see in the parameters) increasing the calculation overhead a lot.
@@ -498,7 +498,7 @@ Let's start by looking at the most commonly used version: the client sending the
 Please send a normal request to the endpoint `/content/simple`:
 
 ```console
-http -v http://http-fun.hackership.org/content/simple
+http --verbose http://http-fun.hackership.org/content/simple
 ```
 
 You should see a text-formatted response as follows:
@@ -519,7 +519,7 @@ In the content header you can see the result of the "negotiation", the `Content-
 This server chose this as the preferred response, beause the client – you – send an i-accept-anything-`*/*`-`Accept` header. We can also overwrite any header `httpie` sends by adding it to the end of the request. For example, let's tell the server we only accept 'application/json' format:
 
 ```console
-http -v http://http-fun.hackership.org/content/simple Accept:'application/json'
+http --verbose http://http-fun.hackership.org/content/simple Accept:'application/json'
 ```
 
 Voila
@@ -542,7 +542,7 @@ The server responded with the same data, but formatted in `JSON` as we requested
 We can also give multiple formats, the client supports and let the server decide which one to pick. We do that by giving multiple values delimited with a comma (`,`) as follows:
 
 ```console
-http -v http://http-fun.hackership.org/content/simple Accept:'text/plain, application/json'
+http --verbose http://http-fun.hackership.org/content/simple Accept:'text/plain, application/json'
 ```
 
 **Exercise**: Can you argue, which format the server response will be? What if you change the order of the entries? Try it.
@@ -552,7 +552,7 @@ http -v http://http-fun.hackership.org/content/simple Accept:'text/plain, applic
 Right now, if the server finds multiple formats applicable it will just pick the first in line. Althought that might be fine for the client, the client might actually prefer some formats over others. In order to let the server know about that, we can give each mimetype a quality-value `;q=` to order them by. The default quality is `1.0`. So if we wanted to discourage the usage of `text/plan` from our previous example, no matter the order, we could request:
 
 ```console
-http -v http://http-fun.hackership.org/content/simple Accept:'text/plain; q=0.9, application/json'
+http --verbose http://http-fun.hackership.org/content/simple Accept:'text/plain; q=0.9, application/json'
 ```
 
 Nice, eh?
@@ -574,7 +574,7 @@ Note: In Web-Development the compression is typically handeled by a load-balanci
 Let's redirect our attention to a resource that has gzip-encoding enabled: `/content/compressed`. Aside from sending the body gzip-encoded, it behaves exactly the same as `/content/simple` did before. So you can compare requests to both and the results, you'll get back. Now run:
 
 ```console
-http -v http://http-fun.hackership.org/content/compressed
+http --verbose http://http-fun.hackership.org/content/compressed
 ```
 
 **Note**: If `httpie` finds the appropriate `Content-Encoding`-Header send by the server, it will automatically decode the content before showing. So, you can only see the difference by looking at the headers send back.
@@ -647,7 +647,7 @@ The main entry point to look at caching is the `Cache-Control`-header. Unlike so
 Cache control has various extensions, and the specification even allows for third party vendor extensions, which are separated by a comma. If the client doesn't understand an extension, it should simply ignore it, as long as it implements the ones in the standard. Let's take a look at a simple example:
 
 ```console
-http -v http://http-fun.hackership.org/cache/simple
+http --verbose http://http-fun.hackership.org/cache/simple
 ```
 
 In our output we find the `Cache-Control`-header:
@@ -702,13 +702,13 @@ Unlike expires, which allows the client to cache the content, the entity tag (sh
 Here is a simple example on how this works. Let's take the following resource at `/cache/etag`:
 
 ```console
-http -v http://http-fun.hackership.org/cache/etag
+http --verbose http://http-fun.hackership.org/cache/etag
 ```
 
 It comes back with a `Cache-Control` header allowing anyone to cache, but more interesting for us, it delivers us an `Etag` for the content. Now when we want to access the entity again later, our cache tells us we need to revalidate it and we can do so by supplying that etag using the `If-None-Match`-header:
 
 ```console
-http -v http://http-fun.hackership.org/cache/etag If-None-Match:'1234567-etd'
+http --verbose http://http-fun.hackership.org/cache/etag If-None-Match:'1234567-etd'
 ```
 
 ```HTTP
@@ -724,7 +724,7 @@ And voila, instead of the entire response, the server informed us that the resou
 We can also ask with a stale etag, in which case we receive a full response again – including an updated etag:
 
 ```console
-http -v http://http-fun.hackership.org/cache/etag If-None-Match:'1234567'
+http --verbose http://http-fun.hackership.org/cache/etag If-None-Match:'1234567'
 ```
 
 
@@ -751,13 +751,13 @@ Let's image a very simple chat API with the endpoint `/chat/messages`. If we sen
 Now image you are the website, and you poll the `/chat/messages/` endpoint once a second by doing:
 
 ```console
-http -v http://http-fun.hackership.org/chat/messages
+http --verbose http://http-fun.hackership.org/chat/messages
 ```
 
 Do that once a second (rougly), while on the other shell now post a message to it. On the website that could happen through a form for example:
 
 ```console
-http -v --form http://http-fun.hackership.org/chat/messages message="Hello"
+http --verbose --form http://http-fun.hackership.org/chat/messages message="Hello"
 ```
 
 *Note*: this server implementation is rather dumb, if many people do that at the same time, you might don't even see your message pop up ;) .
@@ -820,13 +820,13 @@ But in this case, we actually want to allow the client to read that content. The
 Take a look at this resource:
 
 ```console
-http -v http://http-fun.hackership.org/chat/allowed-messages Origin:'http://www.hackership.org'
+http --verbose http://http-fun.hackership.org/chat/allowed-messages Origin:'http://www.hackership.org'
 ```
 
 You can see, that one has the `Access-Control-Allow-Origin` header set to allow "http://www.hackership.org". But you will also see, that trying to "POST" to it is denied by the server:
 
 ```console
-http -v POST http://http-fun.hackership.org/chat/allowed-messages Origin:'http://www.hackership.org'
+http --verbose POST http://http-fun.hackership.org/chat/allowed-messages Origin:'http://www.hackership.org'
 ```
 
 This way, the server can allow third-party sites to load the content but disallow the imposting of others. Another way to enforce this behaviour by also setting the `Access-Control-Allow-Method` header.
@@ -834,7 +834,7 @@ This way, the server can allow third-party sites to load the content but disallo
 In order to not rely on the browser implementing and enforcing the security rule, many APIs which generally allow CORS will only do so, when the request contains a specific `Origin`-Header (which is automatically supplied when doing AJAX requests). If you remove the `Origin`-header in our `httpie`-request, you will see that the server denies access:
 
 ```console
-http -v http://http-fun.hackership.org/chat/allowed-messages
+http --verbose http://http-fun.hackership.org/chat/allowed-messages
 ```
 
 
@@ -894,7 +894,7 @@ virtualenv .
 And you can run the tests against your local instance on port 8080:
 
 ```console
-./bin/http -v http://localhost:8080/
+./bin/http --verbose http://localhost:8080/
 ```
 
 ### Opening the Developer Console
