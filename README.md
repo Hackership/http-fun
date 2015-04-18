@@ -838,7 +838,7 @@ http --verbose http://http-fun.hackership.org/chat/allowed-messages
 ```
 
 
-Let's get back to the browser and try again with the `/chat/allowed` url...:
+Let's get back to the browser and try again with the `/chat/allowed` URL:
 
 
 ```Javascript
@@ -847,37 +847,52 @@ $.get("http://http-fun.hackership.org/chat/allowed-messages").then(function(data
 
 Allowing access across origin is called "Cross Origin Resource Sharing", or CORS for short. As so often, this is just a brief overview of the key principle and the main parameters and there are plenty more to discover. I recommend [the MDN article](https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS) and the [CORS-specification](http://www.w3.org/TR/access-control/) for further reading.
 
-### Cross-Site-Scripting
-
-### Cross Site Request Forgery (& Token)
-
-
-### Restful (API) Design
-
-
-
 
 ### HTTP Streaming
 
+As HTTP is a request-response protocol, after a request ends the connection is closed (or at least the next request is processed: see [keep alive](#keep-alive-and-pipelining)). But sometimes it is convenient if we could use http to stream continuous data. And although that wasn't anticipated in the standard itself, this indeed is possible in a totally legit way.
 
-### Keep-Alive and Pipelining
+To enable streaming, we essentially want to make sure the client nor the server close the connection before everything has been send. We can make this possible by not providing any `Content-Length`-header nor closing the connection by ourself. This way, the client doesn't know when all content has been send and will continue to listen.
 
+In order to enable streaming with `httpie` just provide the `--stream` flag and see what happens:
+
+```console
+http --verbose --stream http://localhost:8000/stream/time
+```
+
+This will ping the current time once a second (for twenty times). Technically, such a stream could go on forever – like if you were sending a live-video feed, or like [Twitters Firehose](https://dev.twitter.com/streaming/overview). As you can see in the output, the server is informing the client that the content will be streamed by giving the `Content-Type:text/event-stream` as well as give the additional `Transfer-Encoding: chunked`-flag.
+
+In the `chunked`-encoding mode, we inform the client, that they will receive data in chunks. Each chunk being flushed on the connection by once. The connection ends with one final chunk with the length of 0. At that point the connection can be closed safely.
+
+Streaming like this can be incredibly helpful, when a lot of small data is constantly received and the overhead of reopening the connection costs too much time. Coming back to our example of the chat (from earlier), lets receive new messages through a streaming channel...
+
+```console
+http --stream -f http://localhost:5000/stream/chat
+```
+
+And see what happens if you now send a message to the chat with the function as before:
+
+```console
+http --verbose --form http://localhost:5000/chat/messages message="test"
+```
+
+You receive a new updated chunk with all current messages. And you didn't have to reopen the connection. That's because the 1-second polling now happens on the server side for you. But it could also be implemented in a way, in which the server receives real-time information and directly pushes it to you. This simple implementation closes the socket after 5 successful updates to not leak around too many connection. But if it wasn't, it could serve the information forever.
+
+As you can see this is much faster than having to re-establish a connection first.
 
 
 ## Coming up next/ ToDo
 
-### Reverse Proxies
-
-### Do Not Track
-
-### HTTPS
-
-### Long-Polling/Comet/Streaming
-
-### Websockets
-
-### HTTP/2.0
-
+ - keep-alive and pipelining
+ - Restful (API) Design
+ - Cross-Site-Scripting
+ - Cross Site Request Forgery (& Token)
+ - Reverse Proxies
+ - Do Not Track
+ - HTTPS
+ - Long-Polling/Comet/Streaming
+ - Websockets
+ - HTTP/2.0
 
 ## Appendix
 

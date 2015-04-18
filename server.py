@@ -357,6 +357,37 @@ def chat_messages_cors():
     response.headers['Access-Control-Allow-Origin'] = "http://www.hackership.org"
     return response
 
+
+# Streaming
+
+@app.route("/stream/time", methods=["GET"])
+def stream_time():
+    def events():
+        for x in xrange(10):
+            yield "{}\n".format(datetime.now().isoformat())
+            time.sleep(1)  # an artificial delay
+    return Response(events(), content_type='text/event-stream')
+
+
+@app.route("/stream/chat", methods=["GET"])
+def stream_chat():
+    def events():
+        global CHAT
+        chat = CHAT[:]
+        updates = 0
+        yield "{}\n".format(json.dumps(CHAT))
+        while updates < 5:
+            if chat != CHAT:
+                yield "{}\n".format(json.dumps(CHAT))
+                chat = CHAT[:]
+                updates += 1
+            time.sleep(1)  # an artificial delay
+    return Response(events(), content_type='text/event-stream')
+
+
+
+## General Configuration, needed for cookies
+
 app.secret_key = "complicatedHash"
 
 if __name__ == "__main__":
