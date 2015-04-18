@@ -718,7 +718,7 @@ In the example before, we were loading chat messages from  `http-fun.hackership.
 Now, in the console type in the following and press enter:
 
 ```Javascript
-$.get("http://http-fun.hackership.org/chat/messages").then(function(r) {alert(r.data);});
+$.get("http://http-fun.hackership.org/chat/messages").then(function(data) {alert(data);});
 ```
 
 From the code you'd expect an alert message with the content of the response. But instead what you'll see is this ugly error message:
@@ -753,7 +753,7 @@ Let's get back to the browser and try again with the `/chat/allowed` url...:
 
 
 ```Javascript
-$.get("http://http-fun.hackership.org/chat/allowed-messages").then(function(r) {alert(r.data);});
+$.get("http://http-fun.hackership.org/chat/allowed-messages").then(function(data) {alert(data);});
 ```
 
 Allowing access across origin is called "Cross Origin Resource Sharing", or CORS for short. As so often, this is just a brief overview of the key principle and the main parameters and there are plenty more to discover. I recommend [the MDN article](https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS) and the [CORS-specification](http://www.w3.org/TR/access-control/) for further reading.
