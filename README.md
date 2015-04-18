@@ -52,12 +52,12 @@ telnet http-fun.hackership.org
 
 You will see it connect and waiting for input.
 
-![](images/waiting-telnet.png?raw=true)
+![](https://raw.github.com/Hackership/http-fun/master/images/waiting-telnet.png?raw=true)
 
 
 Type `GET / HTTP/1.0` and press enter twice. You should see it respond with 'Hello World':
 
-![](images/hello-world.png?raw=true)
+![](https://raw.github.com/Hackership/http-fun/master/images/hello-world.png?raw=true)
 
 You just successfully connected to a Webserver via the HTTP-Protocol and requested (`GET`) a resource (`/`) over it. Congrats!
 
@@ -77,7 +77,7 @@ GET / HTTP/1.0
 User-Agent: Telnet
 ```
 
-![](images/with-user-agent.png?raw=true)
+![](https://raw.github.com/Hackership/http-fun/master/images/with-user-agent.png?raw=true)
 
 You've just successfully send your first header to the server, telling them that you are using the _telnet_ to connect (as the "browser"). As you can see, the format for sending headers is exactly the same as for receiving them, a keyword, a colon (`:`) and the value. Multiple headers separated by a line-break. Let's do it again, this time we identify as 'Terminal' and see what happens.
 
@@ -89,7 +89,7 @@ User-Agent: Terminal
 
 You will see
 
-![](images/hello-terminal.png?raw=true)
+![](https://raw.github.com/Hackership/http-fun/master/images/hello-terminal.png?raw=true)
 
 
 ### What just happened?
@@ -104,7 +104,7 @@ Typing this up every time is kinda dreadful and mostly an exercise for you to un
 
 Let's do a simple request with it again, type `http --verbose http://http-fun.hackership.org/`:
 
-![](images/httpie-hello.png?raw=true)
+![](https://raw.github.com/Hackership/http-fun/master/images/httpie-hello.png?raw=true)
 
 Httpie formats the output the same we just did (request, headers + body then the response, headers and body), but gives us pretty syntax highlighting and helps us in doing the right headers and formatting of those.
 
@@ -163,7 +163,7 @@ http --verbose --session cookie_test http://http-fun.hackership.org/cookie/login
 
 The server accepted our request and told us we are authorized.
 
-![](images/authorized.png?raw=true)
+![](https://raw.github.com/Hackership/http-fun/master/images/authorized.png?raw=true)
 
 We can see in the headers, that it set the cookie "username" to "hackership". Well, let's try to connect to the secrect-room again and see what happens:
 
@@ -181,7 +181,7 @@ This is all cool, but if you think about it, this also quite easy to hack. Just 
 http --verbose http://http-fun.hackership.org/cookie/secret-room Cookie:username=imposter
 ```
 
-![](images/imposter.png?raw=true)
+![](https://raw.github.com/Hackership/http-fun/master/images/imposter.png?raw=true)
 
 Well. That's not really what we want – or can allow for that matter. This is why most modern web-frameworks have a mechanic called "session"-handling. The specific implementations differ, but in general there are two approaches:
 
@@ -214,7 +214,7 @@ http --verbose --session cookie_test http://http-fun.hackership.org/session/secr
 
 Looks like we can:
 
-![](images/login-time.png?raw=true)
+![](https://raw.github.com/Hackership/http-fun/master/images/login-time.png?raw=true)
 
 ## Cookies and Privacy
 
@@ -374,7 +374,7 @@ http --verbose http://http-fun.hackership.org/redirect/simple
 
 We'll see the most simple version of a redirect:
 
-![](images/302-found.png?raw=true)
+![](https://raw.github.com/Hackership/http-fun/master/images/302-found.png?raw=true)
 
 The server responds with the status code "302 Found" and through the "Location"-header tells the client where the resource is to be found now. In our case it just redirects us back to the main page at `/` .
 
@@ -805,7 +805,7 @@ $.get("http://http-fun.hackership.org/chat/messages").then(function(data) {alert
 
 From the code you'd expect an alert message with the content of the response. But instead what you'll see is this ugly error message:
 
-![CORS](images/cors-error.png?raw=true)
+![CORS](https://raw.github.com/Hackership/http-fun/master/images/cors-error.png?raw=true)
 
 #### Some Background
 
@@ -901,11 +901,11 @@ And you can run the tests against your local instance on port 8080:
 
 In Firefox navigate to `Tools->Web Developer->Web Console` and click it.
 
-![Webconsole](images/webconsole.png?raw=true)
+![Webconsole](https://raw.github.com/Hackership/http-fun/master/images/webconsole.png?raw=true)
 
 Unless you configured it differently before a big panel should pop up from the bottom like this:
 
-![console-open](images/console-open.png?raw=true)
+![console-open](https://raw.github.com/Hackership/http-fun/master/images/console-open.png?raw=true)
 
 This panel is the "developer console". Head back to the chapter you were looking at :D .
 
