@@ -63,7 +63,7 @@ def cookies_secret_room():
 def cookies_login():
     name = request.args.get("username", False)
     password = request.args.get("password", False)
-    print name, password
+
     if not password == "password" or not name:
         abort(401)
 
@@ -351,11 +351,11 @@ def chat_messages_cors():
     response.headers['Access-Control-Allow-Origin'] = "http://www.hackership.org"
     return response
 
+app.secret_key = "complicatedHash"
 
 if __name__ == "__main__":
     config = dict(port=8080, debug=True)
     if os.getenv('production'):
         config = dict(host="0.0.0.0", port=5000)
 
-    app.secret_key = "complicatedHash"
     app.run(**config)
