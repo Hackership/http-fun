@@ -268,7 +268,7 @@ def useragent():
 if __name__ == "__main__":
     config = dict(port=8080, debug=True)
     if os.getenv('production'):
-        config["host"] = "0.0.0.0"
+        config = dict(host="0.0.0.0", port=5000)
 
     app.secret_key = "complicatedHash"
     app.run(**config)
