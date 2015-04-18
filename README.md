@@ -1,6 +1,6 @@
 # http-fun
 
-Let's have some fun exploring the HTTP Protocol.
+Let's have some fun exploring the HTTP Protocol. HTTP stands for Hypertext Transport Protocol and is the way browsers talk to server, fetch websites, images and everything they need. It is further more often use as the base protocol between public APIs (like twitter or Facebooks) and to serve for mobile clients.
 
 ## Preamble
 
