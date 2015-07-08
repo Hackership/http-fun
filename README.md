@@ -4,7 +4,7 @@ Let's have some fun exploring the HTTP Protocol. HTTP stands for Hypertext Trans
 
 ## Preamble
 
-This interactive learning material assumes you are familiar with the command line (Shell/Terminal) and have done some web server programming before. You don't need to be no expert on either of them, but if you hear about them the first time, you will struggle
+This interactive learning material assumes you are familiar with the command line (Shell/Terminal) and have done some web server programming before. You don't need to be an expert on either of them, but if you hear about them the first time, you will struggle.
 
 
 ## Installation Instructions
