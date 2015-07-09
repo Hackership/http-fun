@@ -158,7 +158,7 @@ As you can see, the server told us, we aren't authorized to access this page. Le
 
 
 ```console
-http --verbose --session cookie_test http://http-fun.hackership.org/cookie/login?username=hackership&password=password
+http --verbose --session cookie_test "http://http-fun.hackership.org/cookie/login?username=hackership&password=password"
 ```
 
 The server accepted our request and told us we are authorized.
@@ -203,7 +203,7 @@ http --verbose --session cookie_test http://http-fun.hackership.org/session/secr
 Looks, like we have login first. Well, let's do that. This time against the `/session/login`-resource.
 
 ```console
-http --verbose --session cookie_test http://http-fun.hackership.org/cookie/login?username=hackership&password=password
+http --verbose --session cookie_test "http://http-fun.hackership.org/cookie/login?username=hackership&password=password"
 ```
 
 Can you spot the `Set-Cookie`-header in the response? Well, that looks like a bunch of garbage, doesn't it? But we know it is the value of 'session'. Let's see if we can connect now:
