@@ -47,7 +47,7 @@ Technically this should all also work with Chrome, Chromium and Safari, but all 
 Open a [terminal/commandline/shell/cmd.exe](http://opentechschool.github.io/python-beginners/en/getting_started.html#opening-a-console-on-mac-os-x) and start telnet
 
 ```console
-telnet http-fun.hackership.org
+telnet http-fun.hackership.org 80
 ```
 
 You will see it connect and waiting for input.
